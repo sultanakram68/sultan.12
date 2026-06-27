@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    background-color: #0a0f0d;
+    color: #ffffff;
+  }
+  
+  body {
+    overflow-x: hidden;
+  }
+}
+
+/* Custom glowing selection highlight */
+::selection {
+  background-color: #39FF14;
+  color: #0a0f0d;
+}
+
+/* Custom neon scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a0f0d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1f2b27;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #39FF14;
+}
