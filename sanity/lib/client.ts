@@ -25,39 +25,39 @@ export const client = isConfigured
     })
   : null;
 
-// Mock Fallback Data representing Crowd Favorites from the Neon Bites aesthetic
+// Mock Fallback Data representing Featured Devices & Accessories from Sultan Mobile
 export const MOCK_CROWD_FAVORITES = [
   {
     _id: "fav-1",
-    name: "Cyberpunk Glaze Burger",
-    slug: "cyberpunk-glaze-burger",
-    price: 18.50,
-    description: "Double smashed Wagyu beef infused with neon jalapeño relish, aged cheddar, and charcoal brioche.",
-    imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=800&q=80",
+    name: "iPhone 15 Pro Max (Titanium)",
+    slug: "iphone-15-pro-max",
+    price: 1199.00,
+    description: "Certified pre-owned & new sealed devices with 100% battery health and full official shop warranty.",
+    imageUrl: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80",
   },
   {
     _id: "fav-2",
-    name: "Matrix Matcha Boba Shake",
-    slug: "matrix-matcha-boba-shake",
-    price: 9.00,
-    description: "Ceremonial grade green tea matcha layered with glowing tapioca pearls and coconut cream.",
-    imageUrl: "https://images.unsplash.com/photo-1536935338788-846bb9981813?auto=format&fit=crop&w=800&q=80",
+    name: "AirPods Pro (2nd Gen & Wireless)",
+    slug: "airpods-pro-2nd-gen",
+    price: 249.00,
+    description: "Active noise cancellation wireless earbuds with customized protective silicone carrying case.",
+    imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
   },
   {
     _id: "fav-3",
-    name: "Neon Green Wasabi Tacos",
-    slug: "neon-green-wasabi-tacos",
-    price: 16.00,
-    description: "Crispy tempura shrimp tacos topped with glowing lime-wasabi crema and pickled purple cabbage.",
-    imageUrl: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=800&q=80",
+    name: "Fast Chargers & MagSafe Accessories",
+    slug: "fast-chargers-magsafe",
+    price: 35.00,
+    description: "Original fast-charging adapters, armored cables, and MagSafe wireless charging pads.",
+    imageUrl: "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&w=800&q=80",
   },
   {
     _id: "fav-4",
-    name: "Electric Lime Cheesecake",
-    slug: "electric-lime-cheesecake",
-    price: 12.00,
-    description: "Velvety cheesecake with a glowing key lime mirror glaze on an oreo dark cocoa crust.",
-    imageUrl: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=800&q=80",
+    name: "Smart Watches & Fitness Bands",
+    slug: "smart-watches",
+    price: 199.00,
+    description: "Latest smartwatches with heart rate monitoring, OLED displays, and interchangeable straps.",
+    imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
   },
 ];
 

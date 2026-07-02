@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Zap } from "lucide-react";
 
 /**
  * Footer Component
@@ -10,8 +9,11 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
         
         <div className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-neon-green" />
-          <span className="font-bold text-white tracking-wider">NEON BITES</span>
+          <span className="font-extrabold text-[#ff6700] drop-shadow-[0_0_6px_rgba(255,103,0,0.35)] flex items-center gap-1.5 tracking-[0.2em]">
+            <span className="text-orange-400/80">❖</span>
+            <span>SULTAN</span>
+            <span className="text-orange-400/80">❖</span>
+          </span>
           <span className="text-gray-600">|</span>
           <span>© {new Date().getFullYear()} All rights reserved.</span>
         </div>

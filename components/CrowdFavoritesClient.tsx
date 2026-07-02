@@ -1,0 +1,123 @@
+"use client";
+
+import * as React from "react";
+import Image from "next/image";
+import { Smartphone, ShoppingBag } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./ui/card";
+import { Button } from "./ui/button";
+import { useLanguage } from "@/context/LanguageContext";
+import { useSettings } from "@/hooks/useSettings";
+import { MenuItem } from "./CrowdFavorites";
+
+interface CrowdFavoritesClientProps {
+  favorites: MenuItem[];
+}
+
+export function CrowdFavoritesClient({ favorites }: CrowdFavoritesClientProps) {
+  const { t } = useLanguage();
+  const [items, setItems] = React.useState<MenuItem[]>(favorites);
+
+  React.useEffect(() => {
+    const fetchFirebaseProducts = async () => {
+      try {
+        const { db } = await import("@/lib/firebase");
+        const { collection, getDocs } = await import("firebase/firestore");
+        const snap = await getDocs(collection(db, "products"));
+        if (!snap.empty) {
+          const fetched: MenuItem[] = [];
+          snap.forEach((doc) => {
+            const data = doc.data();
+            // Map Firebase product schema to expected MenuItem schema
+            fetched.push({
+              _id: doc.id,
+              name: data.name,
+              slug: doc.id,
+              price: parseFloat(data.price) || 0,
+              description: data.description,
+              imageUrl: data.imageUrl,
+            });
+          });
+          setItems(fetched);
+        }
+      } catch (err) {
+        console.warn("Could not fetch products from Firebase, using fallback.", err);
+      }
+    };
+    
+    fetchFirebaseProducts();
+  }, [favorites]);
+
+  return (
+    <section id="crowd-favorites" className="py-20 bg-neon-dark relative scroll-mt-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Section Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 border-b border-neon-border pb-6">
+          <div>
+            <div className="inline-flex items-center gap-2 text-neon-green text-sm font-bold uppercase tracking-wider mb-2">
+              <Smartphone className="w-4 h-4 text-neon-green animate-bounce" />
+              <span>{t("fav.badge")}</span>
+            </div>
+            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
+              {t("fav.title")}
+            </h2>
+          </div>
+          <p className="text-gray-400 max-w-md mt-4 md:mt-0 text-sm sm:text-base">
+            {t("fav.desc")}
+          </p>
+        </div>
+
+        {/* Grid of Menu Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {items.map((item) => (
+            <Card key={item._id} className="flex flex-col justify-between bg-neon-surface/40 border-neon-border hover:border-neon-green/60 transition-all duration-300">
+              <div>
+                {/* Image Container */}
+                <div className="relative h-56 w-full overflow-hidden bg-white rounded-t-xl flex items-center justify-center p-2">
+                  {item.imageUrl ? (
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                      className="object-contain p-4 transition-transform duration-500 hover:scale-110"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
+                      No Image Available
+                    </div>
+                  )}
+                  {/* Price Badge overlay */}
+                  <div className="absolute top-3 right-3 bg-neon-dark/90 border border-neon-green text-neon-green font-extrabold px-3 py-1 rounded-full text-sm shadow-neon-glow backdrop-blur-md">
+                    ${typeof item.price === "number" ? item.price.toFixed(2) : item.price}
+                  </div>
+                </div>
+
+                {/* Content */}
+                <CardHeader>
+                  <CardTitle className="text-white text-lg font-bold">{item.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-gray-400 text-sm leading-relaxed">
+                    {item.description || "Premium device guaranteed with full shop warranty."}
+                  </CardDescription>
+                </CardContent>
+              </div>
+
+              {/* Action Footer */}
+              <CardFooter className="pt-4 border-t border-neon-border/40">
+                <a href={`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(`مرحباً، أرغب في شراء: ${item.name}`)}`} target="_blank" rel="noopener noreferrer" className="w-full">
+                  <Button variant="outline" size="sm" className="w-full gap-2 hover:bg-neon-green hover:text-neon-dark transition-all font-bold border-neon-green/40 text-neon-green cursor-pointer">
+                    <ShoppingBag className="w-4 h-4" />
+                    <span>{t("nav.order")}</span>
+                  </Button>
+                </a>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+
+      </div>
+    </section>
+  );
+}

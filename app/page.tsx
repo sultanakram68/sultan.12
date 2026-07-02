@@ -1,17 +1,15 @@
 import * as React from "react";
 import { Navbar } from "@/components/Navbar";
 import { HeroSection } from "@/components/HeroSection";
+import { CinematicSection } from "@/components/CinematicSection";
 import { CrowdFavorites } from "@/components/CrowdFavorites";
 import { ProductDetails } from "@/components/ProductDetails";
 import { ContactUs } from "@/components/ContactUs";
 import { Footer } from "@/components/Footer";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 /**
  * Main Landing Page Component (Server Component)
- * 
- * FOR STUDENTS:
- * This component cleanly composes all our landing page sections in sequential loop order.
- * Notice how clean and readable this file is when components are modularized!
  */
 export default function HomePage() {
   return (
@@ -19,13 +17,17 @@ export default function HomePage() {
       {/* Sticky Navigation Bar */}
       <Navbar />
 
-      {/* Hero Banner Section */}
+      {/* Hero Banner Section (Header) */}
       <HeroSection />
 
-      {/* Crowd Favorites Section (Fetches data from Sanity.io) */}
+      {/* --- NEW CINEMATIC SECTION --- */}
+      {/* Scroll down to see the iPhone disassembly, then the site continues */}
+      <CinematicSection />
+
+      {/* Featured Devices Section (Fetches data from Sanity.io) */}
       <CrowdFavorites />
 
-      {/* Product Details & Quality Specifications Section */}
+      {/* Services & Tech Specifications Section */}
       <ProductDetails />
 
       {/* Contact Us Section */}
@@ -33,6 +35,9 @@ export default function HomePage() {
 
       {/* Footer */}
       <Footer />
+
+      {/* Floating WhatsApp Chat Button */}
+      <WhatsAppButton />
     </main>
   );
 }

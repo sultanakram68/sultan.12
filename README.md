@@ -1,6 +1,6 @@
-# ⚡ Neon Bites - Next.js & Sanity Landing Page
+# ⚡ Adessa - Next.js & Sanity Landing Page
 
-Welcome to the **Neon Bites** educational repository! This project is a responsive, vibrant landing page built to teach students modern web development concepts using **Next.js 14/15 (App Router)**, **Shadcn UI design patterns**, and **Sanity.io Headless CMS**.
+Welcome to the **Adessa** educational repository! This project is a responsive, vibrant landing page built to teach students modern web development concepts using **Next.js 14/15 (App Router)**, **Shadcn UI design patterns**, and **Sanity.io Headless CMS**.
 
 ---
 

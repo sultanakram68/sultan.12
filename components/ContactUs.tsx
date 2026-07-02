@@ -4,16 +4,14 @@ import * as React from "react";
 import { MapPin, Phone, Mail, Send } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { useLanguage } from "@/context/LanguageContext";
 
 /**
  * Contact Us Section Component
- * 
- * FOR STUDENTS:
- * This component satisfies the `#contact-us` navigation link.
- * We use React client state (`useState`) to handle basic form submission simulation.
  */
 export function ContactUs() {
   const [submitted, setSubmitted] = React.useState(false);
+  const { t } = useLanguage();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,13 +28,13 @@ export function ContactUs() {
           {/* Info Side */}
           <div>
             <div className="inline-flex items-center gap-2 text-neon-green text-xs font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border border-neon-green/30 bg-neon-green/5 mb-4">
-              Get In Touch
+              {t("contact.badge")}
             </div>
             <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight mb-6">
-              CONNECT WITH <span className="text-neon-green">NEON HQ</span>
+              {t("contact.title")}
             </h2>
             <p className="text-gray-400 text-base sm:text-lg mb-8 leading-relaxed">
-              Have questions about catering, dietary allergies, or booking our cyberpunk lounge for private shoots? Drop a transmission below.
+              {t("contact.desc")}
             </p>
 
             <div className="space-y-6">
@@ -45,30 +43,30 @@ export function ContactUs() {
                   <MapPin className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-white font-bold">Lounge Location</h4>
-                  <p className="text-gray-400 text-sm mt-1">1042 Cyber District Blvd, Sector 7, Neo Tokyo / Edessa Hub</p>
+                  <h4 className="text-white font-bold">Shop Location / الموقع</h4>
+                  <p className="text-gray-300 text-base font-medium mt-1">عثمانية مركز - Osmaniye Merkez</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-neon-surface border border-neon-border text-neon-green shrink-0">
-                  <Phone className="w-6 h-6" />
+              <a href="tel:+905377903339" className="flex items-start gap-4 group cursor-pointer p-2 -m-2 rounded-xl hover:bg-neon-surface/40 transition-all">
+                <div className="p-3 rounded-xl bg-neon-surface border border-neon-border text-neon-green shrink-0 group-hover:bg-neon-green group-hover:text-neon-dark transition-all duration-300 shadow-[0_0_10px_rgba(255,103,0,0.2)]">
+                  <Phone className="w-6 h-6 animate-pulse" />
                 </div>
                 <div>
-                  <h4 className="text-white font-bold">Direct Line</h4>
-                  <p className="text-gray-400 text-sm mt-1">+1 (800) NEON-BITE / 24 Hours</p>
+                  <h4 className="text-white font-bold group-hover:text-neon-green transition-colors">Direct Line / Call Now</h4>
+                  <p className="text-[#ff6700] font-mono font-bold text-base mt-1 tracking-wider">+90 537 790 33 39</p>
                 </div>
-              </div>
+              </a>
 
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-neon-surface border border-neon-border text-neon-green shrink-0">
-                  <Mail className="w-6 h-6" />
+              <a href="mailto:abdullah@sultan.com" className="flex items-start gap-4 group cursor-pointer p-2 -m-2 rounded-xl hover:bg-neon-surface/40 transition-all">
+                <div className="p-3 rounded-xl bg-neon-surface border border-neon-border text-neon-green shrink-0 group-hover:bg-neon-green group-hover:text-neon-dark transition-all duration-300 shadow-[0_0_10px_rgba(255,103,0,0.2)]">
+                  <Mail className="w-6 h-6 animate-pulse" />
                 </div>
                 <div>
-                  <h4 className="text-white font-bold">Electronic Mail</h4>
-                  <p className="text-gray-400 text-sm mt-1">transmissions@neonbites.io</p>
+                  <h4 className="text-white font-bold group-hover:text-neon-green transition-colors">Electronic Mail / البريد</h4>
+                  <p className="text-gray-300 font-mono text-sm mt-1 underline underline-offset-4 decoration-neon-green/40 group-hover:text-[#ff6700]">abdullah@sultan.com</p>
                 </div>
-              </div>
+              </a>
             </div>
           </div>
 

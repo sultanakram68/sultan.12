@@ -20,8 +20,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       default: "bg-white text-neon-dark hover:bg-gray-200",
-      neon: "bg-neon-green text-neon-dark shadow-neon-glow hover:shadow-neon-glow-lg hover:bg-neon-emerald transform hover:-translate-y-0.5",
-      outline: "border-2 border-neon-green text-neon-green hover:bg-neon-green/10 shadow-[0_0_10px_rgba(57,255,20,0.2)]",
+      neon: "bg-neon-green text-neon-dark shadow-neon-glow hover:shadow-neon-glow-lg hover:bg-orange-500 transform hover:-translate-y-0.5",
+      outline: "border-2 border-neon-green text-neon-green hover:bg-neon-green/10 shadow-[0_0_10px_rgba(255,103,0,0.2)]",
       ghost: "text-gray-300 hover:text-neon-green hover:bg-white/5",
     };
 

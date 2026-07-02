@@ -9,9 +9,12 @@ import "./globals.css";
  * Metadata here automatically defines SEO tags (<title>, <meta name="description">) for Google and social sharing.
  */
 export const metadata = {
-  title: "Neon Bites | Next-Gen Cyberpunk Gastronomy",
-  description: "Experience glowing culinary artistry, molecular infusions, and neon flavors. Built with Next.js & Sanity.io.",
+  title: "Sultan | Next-Gen Mobile & Tech Hub",
+  description: "Top-tier smartphones, glowing gaming accessories, instant credit top-ups, and certified pre-owned devices.",
 };
+
+import { LanguageProvider } from "@/context/LanguageContext";
+import { AuthProvider } from "@/components/AuthProvider";
 
 export default function RootLayout({
   children,
@@ -21,7 +24,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen bg-neon-dark text-white font-sans antialiased selection:bg-neon-green selection:text-neon-dark">
-        {children}
+        <AuthProvider>
+          <LanguageProvider>{children}</LanguageProvider>
+        </AuthProvider>
       </body>
     </html>
   );

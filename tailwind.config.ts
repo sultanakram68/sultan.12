@@ -9,18 +9,19 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Neon Bites Custom Palette
+        // Adessa Custom Palette
         neon: {
-          green: "#39FF14",
-          emerald: "#00FF66",
+          orange: "#ff6700",
+          emerald: "#ff6700",
+          green: "#39ff14", // Added missing neon-green
           dark: "#0a0f0d",
           surface: "#121816",
           border: "#1f2b27",
         },
       },
       boxShadow: {
-        "neon-glow": "0 0 15px rgba(57, 255, 20, 0.4)",
-        "neon-glow-lg": "0 0 25px rgba(57, 255, 20, 0.6)",
+        "neon-glow": "0 0 15px rgba(255, 103, 0, 0.4)",
+        "neon-glow-lg": "0 0 25px rgba(255, 103, 0, 0.6)",
       },
     },
   },

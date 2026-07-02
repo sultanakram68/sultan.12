@@ -16,7 +16,7 @@
 
 /* Custom glowing selection highlight */
 ::selection {
-  background-color: #39FF14;
+  background-color: #ff6700;
   color: #0a0f0d;
 }
 
@@ -35,5 +35,41 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #39FF14;
+  background: #ff6700;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 28s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes radialFadeIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--lx, 0px)), calc(-50% + var(--ly, 0px))) scale(1);
+  }
+}
+
+/* Radial menu item hover glow pulse */
+@keyframes radialGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 103, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(255, 103, 0, 0.6);
+  }
 }
