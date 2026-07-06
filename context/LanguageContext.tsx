@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, onSnapshot } from "firebase/firestore";
 
 export type Language = "en" | "ar" | "tr" | "de";
 
@@ -321,12 +323,9 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     // Attempt to fetch from Firebase
-    const fetchTranslations = async () => {
-      try {
-        const { db } = await import("@/lib/firebase");
-        const { collection, getDocs } = await import("firebase/firestore");
-        
-        const querySnapshot = await getDocs(collection(db, "translations"));
+    let unsubscribe: () => void;
+    try {
+      unsubscribe = onSnapshot(collection(db, "translations"), (querySnapshot) => {
         if (!querySnapshot.empty) {
           const fetchedTranslations: Translations = { ...translations };
           querySnapshot.forEach((doc) => {
@@ -334,15 +333,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
           });
           setDynamicTranslations(fetchedTranslations);
         }
-      } catch (err) {
+      }, (err) => {
         console.warn("Could not fetch translations from Firebase, using fallback.", err);
-      }
-    };
-    
-    // Only run on client
-    if (typeof window !== "undefined") {
-      fetchTranslations();
+      });
+    } catch (err) {
+      console.warn("Could not setup translations listener.", err);
     }
+    
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   const t = React.useCallback(

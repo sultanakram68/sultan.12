@@ -3,12 +3,12 @@
 import React, { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import { Save, CheckCircle2, AlertTriangle, Phone, Type, Plus, X, Settings2 } from "lucide-react";
 
 export default function MediaAdmin() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState("");
   
   // Default values
   const [whatsapp, setWhatsapp] = useState("905377903339");
@@ -18,6 +18,14 @@ export default function MediaAdmin() {
     "خصم 50% على الإكسسوارات والسماعات الأصلية",
     "صيانة فورية خلال 30 دقيقة فقط"
   ]);
+
+  // Toast State
+  const [toast, setToast] = useState<{show: boolean, message: string, type: 'success' | 'error'}>({show: false, message: '', type: 'success'});
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+  };
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -32,6 +40,7 @@ export default function MediaAdmin() {
         }
       } catch (error) {
         console.error("Error fetching settings", error);
+        showToast("فشل جلب الإعدادات", "error");
       } finally {
         setLoading(false);
       }
@@ -43,19 +52,17 @@ export default function MediaAdmin() {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setMessage("");
     
     try {
       await setDoc(doc(db, "settings", "general"), {
         whatsappNumber: whatsapp,
-        marqueeTexts: marquee
+        marqueeTexts: marquee.filter(text => text.trim() !== "")
       }, { merge: true });
       
-      setMessage("Settings saved successfully! Changes are now live.");
-      setTimeout(() => setMessage(""), 5000);
+      showToast("تم حفظ الإعدادات بنجاح!");
     } catch (error) {
       console.error("Error saving settings", error);
-      setMessage("Error saving settings. Please try again.");
+      showToast("حدث خطأ أثناء حفظ الإعدادات", "error");
     } finally {
       setSaving(false);
     }
@@ -75,97 +82,141 @@ export default function MediaAdmin() {
     setMarquee(marquee.filter((_, i) => i !== index));
   };
 
-  if (loading) return <div className="text-blue-600 font-semibold p-8">جاري تحميل الإعدادات...</div>;
-
   return (
-    <div>
-      <div className="flex justify-between items-center mb-8">
+    <div className="space-y-6 relative">
+      
+      {/* Toast Notification (Vercel Style) */}
+      <AnimatePresence>
+        {toast.show && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.9 }}
+            className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-3 px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl"
+          >
+            {toast.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-red-500" />
+            )}
+            <span className="font-medium text-sm text-zinc-100">{toast.message}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800/50 pb-6">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 mb-2">الإعدادات العامة والوسائط</h1>
-          <p className="text-gray-500">إدارة إعدادات الموقع، معلومات التواصل، والنصوص المتحركة.</p>
+          <h1 className="text-2xl font-bold text-zinc-100 tracking-tight mb-1">إعدادات الوسائط والنظام</h1>
+          <p className="text-zinc-500 text-sm">تخصيص أرقام التواصل والنصوص المتحركة (Marquee) الظاهرة في الموقع.</p>
         </div>
-        <button 
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-blue-600 text-white px-8 py-2.5 rounded-lg font-bold hover:bg-blue-700 transition-colors disabled:opacity-50 shadow-sm"
-        >
-          {saving ? "جاري الحفظ..." : "حفظ كل الإعدادات"}
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={handleSave}
+            disabled={saving || loading}
+            className="flex items-center gap-2 bg-zinc-100 hover:bg-white text-zinc-900 px-4 py-1.5 rounded-md text-sm font-semibold transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-zinc-500 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+          >
+            <Save size={16} />
+            {saving ? "جاري الحفظ..." : "حفظ كل الإعدادات"}
+          </button>
+        </div>
       </div>
 
-      {message && (
-        <div className="bg-blue-50 text-blue-700 p-4 rounded-lg mb-6 border border-blue-100 font-medium">
-          {message}
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        {/* Contact Settings */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100 flex items-center gap-2">
-            <span className="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-            </span>
-            معلومات التواصل
-          </h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-500 uppercase mb-2">رقم الواتساب</label>
-              <p className="text-xs text-gray-400 mb-2">أدخل الرقم مع رمز الدولة وبدون علامة + أو مسافات (مثال: 905301234567)</p>
-              <input 
-                type="text" 
-                value={whatsapp}
-                onChange={e => setWhatsapp(e.target.value)}
-                className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-left"
-                placeholder="905XXXXXXXXX"
-                dir="ltr"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Marquee Settings */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-          <h3 className="text-lg font-bold text-gray-900 mb-6 pb-4 border-b border-gray-100 flex items-center gap-2">
-            <span className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/></svg>
-            </span>
-            النصوص المتحركة
-          </h3>
-          <p className="text-xs text-gray-400 mb-4">هذه النصوص ستظهر في الشريط المتحرك أعلى الصفحة الرئيسية.</p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          <div className="space-y-3">
-            {marquee.map((text, idx) => (
-              <div key={idx} className="flex gap-2">
+          {/* WhatsApp Settings */}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="lg:col-span-1 bg-zinc-900/80 border border-zinc-800/80 rounded-xl p-5 h-fit"
+          >
+            <div className="flex items-center gap-3 mb-5 border-b border-zinc-800/50 pb-4">
+              <div className="w-8 h-8 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 shadow-sm">
+                <Phone size={16} />
+              </div>
+              <h2 className="text-sm font-bold text-zinc-200">رقم الواتساب</h2>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-zinc-400">رقم الهاتف (مع رمز الدولة)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 font-mono text-sm">+</span>
                 <input 
                   type="text" 
-                  value={text}
-                  onChange={e => updateMarqueeText(idx, e.target.value)}
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                  placeholder={`النص المتحرك ${idx + 1}`}
+                  value={whatsapp} 
+                  onChange={(e) => setWhatsapp(e.target.value)} 
+                  dir="ltr"
+                  placeholder="90537..."
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-md pl-8 pr-3 py-2 text-zinc-200 focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 transition-colors font-mono text-sm shadow-inner"
                 />
-                <button 
-                  onClick={() => removeMarqueeText(idx)}
-                  className="px-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors border border-red-100 shadow-sm"
-                  title="حذف"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                </button>
               </div>
-            ))}
-            
-            <button 
-              onClick={addMarqueeText}
-              className="mt-2 w-full py-3 border-2 border-dashed border-gray-300 text-gray-500 rounded-lg font-semibold hover:border-blue-400 hover:text-blue-600 transition-colors text-sm flex items-center justify-center gap-2"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-              إضافة نص متحرك
-            </button>
-          </div>
-        </div>
+              <p className="text-[11px] text-zinc-500 mt-2 leading-relaxed">سيتم استخدام هذا الرقم في زر &quot;تواصل معنا&quot; العائم لتوجيه العملاء مباشرة إليك.</p>
+            </div>
+          </motion.div>
 
-      </div>
+          {/* Marquee Settings */}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="lg:col-span-2 bg-zinc-900/80 border border-zinc-800/80 rounded-xl p-5"
+          >
+            <div className="flex items-center justify-between mb-5 border-b border-zinc-800/50 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 shadow-sm">
+                  <Type size={16} />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-zinc-200">الشريط الإخباري (Marquee)</h2>
+                  <p className="text-[11px] text-zinc-500">النصوص المتحركة في أعلى الموقع</p>
+                </div>
+              </div>
+              <button 
+                onClick={addMarqueeText}
+                className="flex items-center gap-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-md text-xs font-medium transition-colors border border-zinc-700"
+              >
+                <Plus size={14} /> إضافة نص
+              </button>
+            </div>
+            
+            <div className="space-y-3">
+              <AnimatePresence>
+                {marquee.map((text, index) => (
+                  <motion.div 
+                    key={index}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="flex gap-2"
+                  >
+                    <div className="flex-1">
+                      <input 
+                        type="text" 
+                        value={text} 
+                        onChange={(e) => updateMarqueeText(index, e.target.value)} 
+                        placeholder={`النص رقم ${index + 1}`}
+                        className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2.5 text-zinc-200 text-sm focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 transition-colors shadow-inner"
+                      />
+                    </div>
+                    <button 
+                      onClick={() => removeMarqueeText(index)}
+                      className="w-10 flex items-center justify-center bg-zinc-900 hover:bg-red-500/10 text-zinc-500 hover:text-red-500 border border-zinc-800 rounded-md transition-colors shrink-0"
+                    >
+                      <X size={16} />
+                    </button>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              
+              {marquee.length === 0 && (
+                <div className="text-center py-10 border border-dashed border-zinc-700 rounded-lg">
+                  <Settings2 className="w-8 h-8 text-zinc-600 mx-auto mb-2" />
+                  <p className="text-zinc-500 text-sm">لا يوجد نصوص حالياً. انقر على إضافة نص للبدء.</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+        </div>
     </div>
   );
 }

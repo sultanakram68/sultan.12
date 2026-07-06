@@ -1,7 +1,10 @@
 "use client";
 
-import * as React from "react";
+import React from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { db } from "@/lib/firebase";
+import { collection, getDocs, onSnapshot } from "firebase/firestore";
 import { Smartphone, ShoppingBag } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./ui/card";
 import { Button } from "./ui/button";
@@ -15,36 +18,32 @@ interface CrowdFavoritesClientProps {
 
 export function CrowdFavoritesClient({ favorites }: CrowdFavoritesClientProps) {
   const { t } = useLanguage();
+  const { settings } = useSettings();
   const [items, setItems] = React.useState<MenuItem[]>(favorites);
 
   React.useEffect(() => {
-    const fetchFirebaseProducts = async () => {
-      try {
-        const { db } = await import("@/lib/firebase");
-        const { collection, getDocs } = await import("firebase/firestore");
-        const snap = await getDocs(collection(db, "products"));
-        if (!snap.empty) {
-          const fetched: MenuItem[] = [];
-          snap.forEach((doc) => {
-            const data = doc.data();
-            // Map Firebase product schema to expected MenuItem schema
-            fetched.push({
-              _id: doc.id,
-              name: data.name,
-              slug: doc.id,
-              price: parseFloat(data.price) || 0,
-              description: data.description,
-              imageUrl: data.imageUrl,
-            });
+    const unsubscribe = onSnapshot(collection(db, "products"), (snap) => {
+      if (!snap.empty) {
+        const fetched: MenuItem[] = [];
+        snap.forEach((doc) => {
+          const data = doc.data();
+          fetched.push({
+            _id: doc.id,
+            name: data.name,
+            slug: doc.id,
+            price: data.price || 0,
+            originalPrice: data.originalPrice || undefined,
+            description: data.description,
+            imageUrl: data.imageUrl,
           });
-          setItems(fetched);
-        }
-      } catch (err) {
-        console.warn("Could not fetch products from Firebase, using fallback.", err);
+        });
+        setItems(fetched);
       }
-    };
+    }, (err) => {
+      console.warn("Could not fetch products from Firebase, using fallback.", err);
+    });
     
-    fetchFirebaseProducts();
+    return () => unsubscribe();
   }, [favorites]);
 
   return (
@@ -68,44 +67,53 @@ export function CrowdFavoritesClient({ favorites }: CrowdFavoritesClientProps) {
         </div>
 
         {/* Grid of Menu Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8">
           {items.map((item) => (
-            <Card key={item._id} className="flex flex-col justify-between bg-neon-surface/40 border-neon-border hover:border-neon-green/60 transition-all duration-300">
-              <div>
-                {/* Image Container */}
-                <div className="relative h-56 w-full overflow-hidden bg-white rounded-t-xl flex items-center justify-center p-2">
-                  {item.imageUrl ? (
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.name}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                      className="object-contain p-4 transition-transform duration-500 hover:scale-110"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
-                      No Image Available
-                    </div>
-                  )}
-                  {/* Price Badge overlay */}
-                  <div className="absolute top-3 right-3 bg-neon-dark/90 border border-neon-green text-neon-green font-extrabold px-3 py-1 rounded-full text-sm shadow-neon-glow backdrop-blur-md">
-                    ${typeof item.price === "number" ? item.price.toFixed(2) : item.price}
+            <Card key={item._id} className="flex flex-col justify-between bg-neon-surface/40 border-neon-border hover:border-neon-green/60 transition-all duration-300 aspect-[9/16]">
+              <Link href={`/product/${item._id}`} className="block h-full group-hover:opacity-90 transition-opacity">
+                <div>
+                  {/* Image Container */}
+                  <div className="relative w-full aspect-square overflow-hidden bg-white rounded-t-xl flex items-center justify-center p-2">
+                    {item.imageUrl ? (
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.name}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                        className="object-contain p-4 transition-transform duration-500 hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
+                        No Image Available
+                      </div>
+                    )}
                   </div>
-                </div>
 
-                {/* Content */}
-                <CardHeader>
-                  <CardTitle className="text-white text-lg font-bold">{item.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-gray-400 text-sm leading-relaxed">
-                    {item.description || "Premium device guaranteed with full shop warranty."}
-                  </CardDescription>
-                </CardContent>
-              </div>
+                  {/* Content */}
+                  <CardHeader>
+                    <CardTitle className="text-white text-lg font-bold">{item.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="text-gray-400 text-sm leading-relaxed">
+                      {item.description || "Premium device guaranteed with full shop warranty."}
+                    </CardDescription>
+                  </CardContent>
+                </div>
+              </Link>
 
               {/* Action Footer */}
-              <CardFooter className="pt-4 border-t border-neon-border/40">
+              <CardFooter className="pt-4 border-t border-neon-border/40 flex-col items-stretch gap-3">
+                <div className="flex flex-col items-center w-full bg-neon-dark/50 rounded-lg py-2 border border-neon-border/30">
+                  {item.originalPrice && (
+                    <span className="text-gray-500 text-xs line-through mb-0.5">
+                      {item.originalPrice}
+                    </span>
+                  )}
+                  <span className="text-neon-green font-black text-lg">
+                    {item.price}
+                  </span>
+                </div>
+                
                 <a href={`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(`مرحباً، أرغب في شراء: ${item.name}`)}`} target="_blank" rel="noopener noreferrer" className="w-full">
                   <Button variant="outline" size="sm" className="w-full gap-2 hover:bg-neon-green hover:text-neon-dark transition-all font-bold border-neon-green/40 text-neon-green cursor-pointer">
                     <ShoppingBag className="w-4 h-4" />

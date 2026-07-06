@@ -3,39 +3,41 @@
 @tailwind utilities;
 
 @layer base {
-  html {
+  html, body {
     scroll-behavior: smooth;
     background-color: #0a0f0d;
     color: #ffffff;
-  }
-  
-  body {
-    overflow-x: hidden;
+    overflow-x: clip !important;
+    max-width: 100vw;
+    margin: 0;
+    padding: 0;
   }
 }
 
-/* Custom glowing selection highlight */
+/* Clean modern selection highlight */
 ::selection {
-  background-color: #ff6700;
-  color: #0a0f0d;
+  background-color: #1E3A8A;
+  color: #ffffff;
 }
 
-/* Custom neon scrollbar */
+/* Sleek modern scrollbar (Vercel / Linear inspired) */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a0f0d;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1f2b27;
-  border-radius: 4px;
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+  transition: background-color 150ms ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #ff6700;
+  background: rgba(100, 116, 139, 0.7);
 }
 
 @keyframes marquee {
@@ -56,7 +58,7 @@
 @keyframes radialFadeIn {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0);
+    transform: translate(-50%, -50%) scale(0.95);
   }
   100% {
     opacity: 1;
@@ -64,12 +66,62 @@
   }
 }
 
-/* Radial menu item hover glow pulse */
+/* Subtle SaaS elevation pulse (Replaces harsh neon glow) */
 @keyframes radialGlow {
   0%, 100% {
-    box-shadow: 0 0 15px rgba(255, 103, 0, 0.3);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06);
   }
   50% {
-    box-shadow: 0 0 25px rgba(255, 103, 0, 0.6);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   }
+}
+
+/* POS Smart Dark Mode (Filter Inversion) */
+.pos-dark-mode {
+  filter: invert(1) hue-rotate(180deg);
+  background-color: #070503;
+}
+.pos-dark-mode img, 
+.pos-dark-mode video,
+.pos-dark-mode .pos-dark-ignore {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* Universal SaaS UI Utilities (@layer components) */
+@layer components {
+  .saas-card {
+    @apply bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 ease-out;
+  }
+  .saas-glass {
+    @apply bg-white/80 backdrop-blur-md border border-slate-200/80 shadow-sm transition-all duration-200;
+  }
+  .saas-btn {
+    @apply inline-flex items-center justify-center font-bold rounded-xl transition-all duration-200 ease-out active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none select-none focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+  .saas-input {
+    @apply w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[#0F172A] font-medium transition-all duration-150 focus:bg-white focus:border-[#1E3A8A] focus:ring-4 focus:ring-[#1E3A8A]/10 outline-none placeholder:text-slate-400;
+  }
+}
+
+/* Professional Print & Invoice Styling */
+@media print {
+  body, .pos-dark-mode, html {
+    background: white !important;
+    color: black !important;
+    filter: none !important;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+  .saas-card, .bg-white, .bg-slate-50 {
+    box-shadow: none !important;
+    border: 1px solid #e2e8f0 !important;
+    background: white !important;
+  }
+}
+
+/* Camera Video Zoom Adjustment (1.35x zoom for easier barcode scanning) */
+#reader video {
+  transform: scale(1.35) !important;
+  transform-origin: center center !important;
 }

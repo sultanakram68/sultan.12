@@ -7,7 +7,8 @@ export interface MenuItem {
   _id: string;
   name: string;
   slug: string;
-  price: number;
+  price: number | string;
+  originalPrice?: number | string;
   description?: string;
   imageUrl?: string;
 }

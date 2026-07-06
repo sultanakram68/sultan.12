@@ -5,6 +5,7 @@ import { Menu, X, Globe, ChevronDown, Check, Star, Layers, MapPin, ShoppingCart,
 import { useLanguage, Language } from "@/context/LanguageContext";
 import { Button } from "./ui/button";
 import { useSession, signIn } from "next-auth/react";
+import { useSettings } from "@/hooks/useSettings";
 
 /**
  * Navigation Bar Component
@@ -14,7 +15,15 @@ export function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isLangOpen, setIsLangOpen] = React.useState(false);
   const { language, setLanguage, t } = useLanguage();
+  const { settings } = useSettings();
   const { data: session } = useSession();
+
+  // Safety: Always remove POS dark mode inversion filter when on official website!
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      document.documentElement.classList.remove("pos-dark-mode");
+    }
+  }, []);
 
   const navLinks = [
     { name: t("nav.favorites"), href: "#crowd-favorites", icon: Star },
@@ -197,7 +206,7 @@ export function Navbar() {
             <img 
               src="/sultan.logo.jpg" 
               alt="Sultan Logo" 
-              className="h-32 w-auto object-contain drop-shadow-[0_0_15px_rgba(57,255,20,0.5)] transition-all duration-300 group-hover:drop-shadow-[0_0_25px_rgba(57,255,20,0.8)] group-hover:scale-105"
+              className="h-40 w-auto object-contain drop-shadow-[0_0_15px_rgba(57,255,20,0.5)] transition-all duration-300 group-hover:drop-shadow-[0_0_25px_rgba(57,255,20,0.8)] group-hover:scale-105"
               style={{ filter: "url(#green-logo-filter)", clipPath: "inset(3px)" }}
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
@@ -219,7 +228,7 @@ export function Navbar() {
         {/* Action Button & Mobile Menu (Right Aligned) */}
         <div className="flex items-center gap-4 justify-end flex-1">
           <div className="hidden md:flex items-center">
-            <Button variant="neon" size="sm" onClick={() => window.open("https://wa.me/905377903339", "_blank")}>
+            <Button variant="neon" size="sm" onClick={() => window.open(`https://wa.me/${settings.whatsappNumber.replace(/[^0-9]/g, '')}`, "_blank")}>
               {t("nav.order")}
             </Button>
           </div>

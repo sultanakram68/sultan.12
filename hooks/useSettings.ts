@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 
 export interface Settings {
   whatsappNumber: string;
@@ -24,26 +24,22 @@ export function useSettings() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const docRef = doc(db, "settings", "general");
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setSettings({
-            whatsappNumber: data.whatsappNumber || defaultSettings.whatsappNumber,
-            marqueeTexts: (data.marqueeTexts && Array.isArray(data.marqueeTexts)) ? data.marqueeTexts : defaultSettings.marqueeTexts
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching settings", error);
-      } finally {
-        setLoading(false);
+    const docRef = doc(db, "settings", "general");
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setSettings({
+          whatsappNumber: data.whatsappNumber || defaultSettings.whatsappNumber,
+          marqueeTexts: (data.marqueeTexts && Array.isArray(data.marqueeTexts)) ? data.marqueeTexts : defaultSettings.marqueeTexts
+        });
       }
-    };
+      setLoading(false);
+    }, (error) => {
+      console.error("Error listening to settings", error);
+      setLoading(false);
+    });
     
-    fetchSettings();
+    return () => unsubscribe();
   }, []);
 
   return { settings, loading };

@@ -1,84 +1,86 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import React from "react";
+import { motion } from "framer-motion";
+import { Package, ImageIcon, Languages, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-export default function AdminDashboard() {
-  const [stats, setStats] = useState({
-    translations: 0,
-    products: 0,
-    news: 0,
-  });
-  
-  const [loading, setLoading] = useState(true);
+export default function AdminWelcome() {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const transRef = doc(db, "translations", "ar");
-        const transDoc = await getDoc(transRef);
-        const transCount = transDoc.exists() ? Object.keys(transDoc.data()).length : 0;
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" as const } }
+  };
 
-        const prodSnap = await getDocs(collection(db, "products"));
-        const prodCount = prodSnap.size;
-
-        setStats({
-          translations: transCount,
-          products: prodCount,
-          news: 0,
-        });
-      } catch (error) {
-        console.error("Error fetching stats", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
-
-  if (loading) return <div className="text-blue-600 font-semibold p-8">جاري تحميل البيانات...</div>;
+  const quickLinks = [
+    { name: "إدارة المنتجات", desc: "إضافة أو تعديل منتجات المتجر", icon: Package, href: "/admin/products", color: "text-blue-500", bg: "bg-blue-500/10" },
+    { name: "الوسائط والإعدادات", desc: "تعديل النصوص المتحركة ورقم التواصل", icon: ImageIcon, href: "/admin/media", color: "text-purple-500", bg: "bg-purple-500/10" },
+    { name: "الترجمة والنصوص", desc: "تعديل جميع نصوص الموقع الثابتة", icon: Languages, href: "/admin/translations", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  ];
 
   return (
-    <div>
-      <h1 className="text-3xl font-black text-gray-900 mb-2">نظرة عامة على لوحة التحكم</h1>
-      <p className="text-gray-500 mb-8">مرحباً بك في لوحة تحكم سلطان موبايل.</p>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-          <h3 className="text-gray-500 text-sm font-semibold mb-2">نصوص الموقع (الترجمات)</h3>
-          <div className="text-4xl font-black text-gray-900">{stats.translations}</div>
-          <p className="text-xs text-gray-400 mt-2 font-medium">نصوص نشطة في قاعدة البيانات</p>
-        </div>
-
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-          <h3 className="text-gray-500 text-sm font-semibold mb-2">المنتجات / الخدمات</h3>
-          <div className="text-4xl font-black text-blue-600">{stats.products}</div>
-          <p className="text-xs text-gray-400 mt-2 font-medium">عناصر يمكن إدارتها</p>
-        </div>
-
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
-          <h3 className="text-gray-500 text-sm font-semibold mb-2">الأخبار والمقالات</h3>
-          <div className="text-4xl font-black text-blue-500">{stats.news}</div>
-          <p className="text-xs text-gray-400 mt-2 font-medium">المحتوى المنشور</p>
-        </div>
+    <motion.div 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="max-w-4xl mx-auto mt-10"
+    >
+      <div className="text-center mb-12 flex flex-col items-center">
+        <motion.div variants={itemVariants} className="relative w-full flex justify-center mb-6">
+          <svg width="0" height="0" className="absolute hidden">
+            <filter id="admin-main-logo-filter">
+              <feColorMatrix
+                type="matrix"
+                values="
+                  0 0 0 0 0.2235
+                  0 0 0 0 1
+                  0 0 0 0 0.0784
+                  -1 -1 -1 0 2.5
+                "
+              />
+            </filter>
+          </svg>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src="/sultan.logo.jpg" 
+            alt="Sultan Logo" 
+            className="h-40 w-auto object-contain drop-shadow-[0_0_15px_rgba(57,255,20,0.5)]" 
+            style={{ filter: "url(#admin-main-logo-filter)", clipPath: "inset(3px)" }}
+          />
+        </motion.div>
+        
+        <motion.p variants={itemVariants} className="text-zinc-300 text-lg md:text-xl font-medium max-w-lg mx-auto leading-relaxed">
+          هذه هي لوحة التحكم الإدارية الخاصة بك
+        </motion.p>
       </div>
 
-      <div className="mt-10 bg-white border border-gray-200 rounded-xl p-8 shadow-sm">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">إجراءات سريعة</h2>
-        <div className="flex flex-wrap gap-4">
-          <Link href="/admin/translations" className="bg-gray-50 hover:bg-blue-50 hover:text-blue-700 text-gray-700 px-6 py-3 rounded-lg font-semibold transition-colors border border-gray-200 hover:border-blue-200">
-            تعديل نصوص الموقع
-          </Link>
-          <Link href="/admin/products" className="bg-gray-50 hover:bg-blue-50 hover:text-blue-700 text-gray-700 px-6 py-3 rounded-lg font-semibold transition-colors border border-gray-200 hover:border-blue-200">
-            إدارة المنتجات
-          </Link>
-          <Link href="/admin/media" className="bg-gray-50 hover:bg-blue-50 hover:text-blue-700 text-gray-700 px-6 py-3 rounded-lg font-semibold transition-colors border border-gray-200 hover:border-blue-200">
-            تعديل الإعدادات
-          </Link>
-        </div>
-      </div>
-    </div>
+      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {quickLinks.map((link, idx) => {
+          const Icon = link.icon;
+          return (
+            <Link key={idx} href={link.href} className="group block">
+              <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-xl p-6 transition-all duration-300 hover:bg-zinc-900 hover:border-zinc-700 hover:shadow-2xl hover:-translate-y-1">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 transition-colors ${link.bg} ${link.color} group-hover:scale-110 duration-300`}>
+                  <Icon className="w-6 h-6" />
+                </div>
+                <h3 className="text-zinc-200 font-bold mb-1 group-hover:text-white transition-colors">{link.name}</h3>
+                <p className="text-zinc-500 text-xs mb-4">{link.desc}</p>
+                <div className="flex items-center text-xs font-semibold text-zinc-400 group-hover:text-zinc-200 transition-colors">
+                  <span>الانتقال للصفحة</span>
+                  <ArrowLeft className="w-3 h-3 mr-1 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </motion.div>
+    </motion.div>
   );
 }

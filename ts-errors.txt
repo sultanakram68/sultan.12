@@ -1,0 +1,9 @@
+STDOUT:
+app/admin/translations/page.tsx(58,28): error TS7006: Parameter 'prev' implicitly has an 'any' type.
+
+
+STDERR:
+
+
+ERROR:
+Error: Command failed: npx tsc --noEmit

@@ -2,12 +2,15 @@
 
 import * as React from "react";
 
+import { useSettings } from "@/hooks/useSettings";
+
 /**
  * Floating WhatsApp Chat Button Component
  * Features tightly confined spinning neon light (Pink, Blue, Green) and inner shadow border
  */
 export function WhatsAppButton() {
-  const whatsappUrl = "https://wa.me/905377903339";
+  const { settings } = useSettings();
+  const whatsappUrl = `https://wa.me/${settings.whatsappNumber.replace(/[^0-9]/g, '')}`;
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex items-center justify-center group">
