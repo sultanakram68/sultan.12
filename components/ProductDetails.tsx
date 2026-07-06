@@ -4,12 +4,14 @@ import * as React from "react";
 import { ShieldCheck, Zap, Smartphone, Wifi } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { useLanguage } from "@/context/LanguageContext";
+import { useSettings } from "@/hooks/useSettings";
 
 /**
  * Product Details Section
  */
 export function ProductDetails() {
   const { t } = useLanguage();
+  const { settings } = useSettings();
 
   const features = [
     {
@@ -81,7 +83,7 @@ export function ProductDetails() {
                 {t("prod.banner.desc")}
               </p>
             </div>
-            <a href="https://wa.me/905377903339" target="_blank" rel="noopener noreferrer" className="shrink-0">
+            <a href={`https://wa.me/${settings.whatsappNumber || "905377903339"}`} target="_blank" rel="noopener noreferrer" className="shrink-0">
               <span className="inline-block px-8 py-3 rounded-full bg-neon-green text-neon-dark font-extrabold shadow-neon-glow hover:bg-emerald-400 hover:scale-105 transition-all">
                 {t("prod.banner.btn")}
               </span>

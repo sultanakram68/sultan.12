@@ -5,3 +5,4 @@
 2. **Step-by-Step Execution**: Work collaboratively and incrementally. Implement changes one step at a time and wait for verification before rushing into broad alterations.
 3. **Zero Breakage Guarantee**: When adding or modifying features, ensure that existing functionalities, commands, styles, and layouts remain intact. Do not break unrelated parts of the app.
 4. **Deep Thinking Before Execution**: Think carefully and analyze the ripple effects of every code edit before executing changes to save the user's valuable time and prevent debugging loops.
+5. **POS Primary Landing Page Guarantee**: In the POS system, the Cashier page (/pos) MUST always be the primary default landing page when entering the site or logging in—NEVER the Dashboard (/pos/dashboard). When a user enters the POS site from new or via browser auto-complete, any direct landing on /pos/dashboard must automatically redirect to /pos.

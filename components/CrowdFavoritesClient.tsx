@@ -4,7 +4,7 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { Smartphone, ShoppingBag } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./ui/card";
 import { Button } from "./ui/button";
@@ -38,6 +38,8 @@ export function CrowdFavoritesClient({ favorites }: CrowdFavoritesClientProps) {
           });
         });
         setItems(fetched);
+      } else {
+        setItems([]);
       }
     }, (err) => {
       console.warn("Could not fetch products from Firebase, using fallback.", err);
@@ -60,15 +62,20 @@ export function CrowdFavoritesClient({ favorites }: CrowdFavoritesClientProps) {
             <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight">
               {t("fav.title")}
             </h2>
+            <p className="text-gray-400 mt-3 max-w-2xl text-base sm:text-lg">
+              {t("fav.desc")}
+            </p>
           </div>
-          <p className="text-gray-400 max-w-md mt-4 md:mt-0 text-sm sm:text-base">
-            {t("fav.desc")}
-          </p>
         </div>
 
-        {/* Grid of Menu Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8">
-          {items.map((item) => (
+        {/* Product Grid / Real Empty State */}
+        {items.length === 0 ? (
+          <div className="text-center py-16 bg-neon-surface/30 rounded-2xl border border-neon-border/40">
+            <p className="text-gray-400 text-lg font-medium">لم يتم إضافة منتجات في المتجر بعد - سيتم تحديث القائمة قريباً...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {items.map((item) => (
             <Card key={item._id} className="flex flex-col justify-between bg-neon-surface/40 border-neon-border hover:border-neon-green/60 transition-all duration-300 aspect-[9/16]">
               <Link href={`/product/${item._id}`} className="block h-full group-hover:opacity-90 transition-opacity">
                 <div>
@@ -123,8 +130,8 @@ export function CrowdFavoritesClient({ favorites }: CrowdFavoritesClientProps) {
               </CardFooter>
             </Card>
           ))}
-        </div>
-
+          </div>
+        )}
       </div>
     </section>
   );

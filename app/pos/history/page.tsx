@@ -576,121 +576,121 @@ export default function POSHistoryLog() {
           </div>
         )}
 
-        {/* TRANSACTION DETAILS MODAL (SCREEN ONLY) */}
+        {/* TRANSACTION DETAILS MODAL (SCREEN ONLY - MOBILE & DESKTOP OPTIMIZED) */}
         {selectedOrder && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150">
-            <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150">
+            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
               
               {/* Modal Header */}
-              <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 sticky top-0 bg-white/95 backdrop-blur-md z-10">
+              <div className="p-4 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 sticky top-0 bg-white/95 backdrop-blur-md z-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-[#1E3A8A] flex items-center justify-center text-white font-bold shrink-0 shadow-sm">
-                    <FileText size={24} />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-[#1E3A8A] flex items-center justify-center text-white font-bold shrink-0 shadow-sm">
+                    <FileText className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-black text-[#0F172A] flex items-center gap-2">
-                      تفاصيل الفاتورة <span className="font-mono text-[#1E3A8A] bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">#{selectedOrder.id}</span>
+                    <h2 className="text-base sm:text-xl font-black text-[#0F172A] flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                      تفاصيل الفاتورة <span className="font-mono text-[#1E3A8A] bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200 text-sm sm:text-base">#{selectedOrder.id}</span>
                     </h2>
-                    <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                    <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 font-medium">
                       {new Date(selectedOrder.createdAt || selectedOrder.timestamp).toLocaleString("ar-SA")}
                     </p>
                   </div>
                 </div>
 
-                {/* Print & Export Buttons */}
-                <div className="flex flex-wrap items-center gap-2">
+                {/* Print & Export Buttons - Compact for Phone Screens */}
+                <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-2">
                   <button 
                     onClick={() => triggerPrint("80mm")}
-                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-[#1E3A8A] text-slate-700 hover:text-white transition-all border border-slate-200 flex items-center gap-1.5 text-xs font-bold"
+                    className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-100 hover:bg-[#1E3A8A] text-slate-700 hover:text-white transition-all border border-slate-200 flex items-center gap-1 text-[11px] sm:text-xs font-bold"
                     title="طباعة حرارية مقاس 80mm"
                   >
-                    <Printer size={15} /> حراري (80mm)
+                    <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">حراري</span> (80mm)
                   </button>
                   <button 
                     onClick={() => triggerPrint("58mm")}
-                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-[#1E3A8A] text-slate-700 hover:text-white transition-all border border-slate-200 flex items-center gap-1.5 text-xs font-bold"
+                    className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-100 hover:bg-[#1E3A8A] text-slate-700 hover:text-white transition-all border border-slate-200 flex items-center gap-1 text-[11px] sm:text-xs font-bold"
                     title="طباعة حرارية مقاس 58mm"
                   >
-                    <Printer size={15} /> حراري (58mm)
+                    <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span className="hidden sm:inline">حراري</span> (58mm)
                   </button>
                   <button 
                     onClick={() => triggerPrint("a4")}
-                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-emerald-600 text-slate-700 hover:text-white transition-all border border-slate-200 flex items-center gap-1.5 text-xs font-bold"
+                    className="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl bg-slate-100 hover:bg-emerald-600 text-slate-700 hover:text-white transition-all border border-slate-200 flex items-center gap-1 text-[11px] sm:text-xs font-bold"
                     title="طباعة كاملة A4 أو تصدير PDF"
                   >
-                    <Download size={15} /> PDF / A4
+                    <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> A4
                   </button>
                   <button 
                     onClick={() => setSelectedOrder(null)} 
-                    className="p-2 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-500 transition-colors border border-slate-200"
+                    className="p-1.5 sm:p-2 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-500 hover:text-red-500 transition-colors border border-slate-200"
                   >
-                    <X size={18} />
+                    <X className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                   </button>
                 </div>
               </div>
 
               {/* Modal Body */}
-              <div className="p-6 space-y-6">
+              <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
                 
                 {/* Top Summary Cards */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
-                    <span className="text-xs text-slate-400 block mb-1">طريقة الدفع</span>
-                    <div className="font-bold text-sm text-[#0F172A]">{getPaymentBadge(selectedOrder.paymentMethod)}</div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                  <div className="bg-slate-50 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200">
+                    <span className="text-[11px] sm:text-xs text-slate-400 block mb-1">طريقة الدفع</span>
+                    <div className="font-bold text-xs sm:text-sm text-[#0F172A]">{getPaymentBadge(selectedOrder.paymentMethod)}</div>
                   </div>
-                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
-                    <span className="text-xs text-slate-400 block mb-1">حالة العملية</span>
-                    <div className="font-bold text-sm text-[#0F172A]">{getStatusBadge(selectedOrder.status)}</div>
+                  <div className="bg-slate-50 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200">
+                    <span className="text-[11px] sm:text-xs text-slate-400 block mb-1">حالة العملية</span>
+                    <div className="font-bold text-xs sm:text-sm text-[#0F172A]">{getStatusBadge(selectedOrder.status)}</div>
                   </div>
-                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
-                    <span className="text-xs text-slate-400 block mb-1">الكاشير المسؤل</span>
-                    <div className="font-bold text-sm text-[#0F172A] truncate flex items-center gap-1.5">
-                      <User size={14} className="text-[#1E3A8A]" />
-                      {selectedOrder.cashierName || "المدير العام"}
+                  <div className="bg-slate-50 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200">
+                    <span className="text-[11px] sm:text-xs text-slate-400 block mb-1">الكاشير المسؤل</span>
+                    <div className="font-bold text-xs sm:text-sm text-[#0F172A] truncate flex items-center gap-1">
+                      <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1E3A8A] shrink-0" />
+                      <span className="truncate">{selectedOrder.cashierName || "المدير العام"}</span>
                     </div>
                   </div>
-                  <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
-                    <span className="text-xs text-slate-400 block mb-1">عدد المنتجات</span>
-                    <div className="font-bold text-sm text-[#0F172A] font-mono">
-                      {selectedOrder.items?.reduce((sum: number, i: any) => sum + (i.qty || 1), 0)} قطعة ({selectedOrder.items?.length} أصناف)
+                  <div className="bg-slate-50 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl border border-slate-200">
+                    <span className="text-[11px] sm:text-xs text-slate-400 block mb-1">عدد المنتجات</span>
+                    <div className="font-bold text-xs sm:text-sm text-[#0F172A] font-mono">
+                      {selectedOrder.items?.reduce((sum: number, i: any) => sum + (i.qty || 1), 0)} قطعة ({selectedOrder.items?.length} صنف)
                     </div>
                   </div>
                 </div>
 
                 {/* Financial Summary */}
-                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="bg-slate-50 p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                   <div className="space-y-1">
-                    <span className="text-xs text-slate-500 font-medium">الإجمالي الأصلي للفاتورة: <strong className="text-[#0F172A] font-mono">₺{(selectedOrder.total || 0).toFixed(2)}</strong></span>
+                    <span className="text-xs text-slate-500 font-medium block">الإجمالي الأصلي للفاتورة: <strong className="text-[#0F172A] font-mono">₺{(selectedOrder.total || 0).toFixed(2)}</strong></span>
                     {(selectedOrder.totalRefunded || 0) > 0 && (
                       <span className="text-xs text-red-600 block font-medium">
                         تم استرداد (إرجاع): <strong className="font-mono">₺{(selectedOrder.totalRefunded).toFixed(2)}</strong>
                       </span>
                     )}
                   </div>
-                  <div className="text-right sm:border-r sm:border-slate-200 sm:pr-6">
-                    <span className="text-xs text-slate-500 block font-bold">المبلغ النهائي الصافي</span>
-                    <span className="text-3xl font-black text-emerald-600 font-mono">
+                  <div className="text-right sm:border-r sm:border-slate-200 sm:pr-6 pt-2 sm:pt-0 border-t border-slate-200 sm:border-t-0">
+                    <span className="text-[11px] sm:text-xs text-slate-500 block font-bold">المبلغ النهائي الصافي</span>
+                    <span className="text-2xl sm:text-3xl font-black text-emerald-600 font-mono">
                       ₺{(selectedOrder.netTotalAfterReturns ?? selectedOrder.total ?? 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
 
-                {/* Products List Table */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-2">
-                    <Package size={16} className="text-[#1E3A8A]" />
+                {/* Products List Table - Horizontal scroll enabled for mobile phone viewing */}
+                <div className="space-y-2 sm:space-y-3">
+                  <h3 className="text-xs sm:text-sm font-bold text-[#0F172A] flex items-center gap-1.5 sm:gap-2">
+                    <Package className="w-4 h-4 sm:w-5 sm:h-5 text-[#1E3A8A]" />
                     قائمة المنتجات المشترى
                   </h3>
                   
-                  <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                    <table className="w-full text-right border-collapse text-sm">
+                  <div className="bg-white rounded-xl sm:rounded-2xl border border-slate-200 overflow-x-auto">
+                    <table className="w-full text-right border-collapse text-xs sm:text-sm min-w-[480px] sm:min-w-0">
                       <thead>
-                        <tr className="border-b border-slate-200 text-slate-500 text-xs bg-slate-50 font-bold">
-                          <th className="py-3 px-4">المنتج</th>
-                          <th className="py-3 px-4 text-center">الكمية</th>
-                          <th className="py-3 px-4">سعر القطعة</th>
-                          <th className="py-3 px-4">الإجمالي</th>
-                          <th className="py-3 px-4 text-center">حالة الإرجاع</th>
+                        <tr className="border-b border-slate-200 text-slate-500 text-[11px] sm:text-xs bg-slate-50 font-bold">
+                          <th className="py-2.5 px-3 sm:py-3 sm:px-4">المنتج</th>
+                          <th className="py-2.5 px-3 sm:py-3 sm:px-4 text-center">الكمية</th>
+                          <th className="py-2.5 px-3 sm:py-3 sm:px-4">سعر القطعة</th>
+                          <th className="py-2.5 px-3 sm:py-3 sm:px-4">الإجمالي</th>
+                          <th className="py-2.5 px-3 sm:py-3 sm:px-4 text-center">حالة الإرجاع</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 text-[#0F172A]">
@@ -698,38 +698,38 @@ export default function POSHistoryLog() {
                           const returnedQty = item.returnedQty || 0;
                           return (
                             <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="py-3 px-4">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+                              <td className="py-2.5 px-3 sm:py-3 sm:px-4">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
                                     {item.imageUrl ? (
                                       /* eslint-disable-next-line @next/next/no-img-element */
-                                      <img src={item.imageUrl} alt="" className="w-8 h-8 object-contain" />
+                                      <img src={item.imageUrl} alt="" className="w-6 h-6 sm:w-8 sm:h-8 object-contain" />
                                     ) : (
-                                      <Package size={18} className="text-slate-400" />
+                                      <Package className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
                                     )}
                                   </div>
-                                  <div>
-                                    <div className="font-bold text-[#0F172A] text-sm">{item.name}</div>
-                                    <div className="text-[10px] text-slate-400 font-mono">{item.barcode || "-"}</div>
+                                  <div className="min-w-0">
+                                    <div className="font-bold text-[#0F172A] text-xs sm:text-sm truncate">{item.name}</div>
+                                    <div className="text-[10px] text-slate-400 font-mono truncate">{item.barcode || "-"}</div>
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-3 px-4 text-center font-mono font-bold">
+                              <td className="py-2.5 px-3 sm:py-3 sm:px-4 text-center font-mono font-bold">
                                 {item.qty}
                               </td>
-                              <td className="py-3 px-4 font-mono text-slate-600">
+                              <td className="py-2.5 px-3 sm:py-3 sm:px-4 font-mono text-slate-600">
                                 ₺{parseFloat(item.price || 0).toFixed(2)}
                               </td>
-                              <td className="py-3 px-4 font-mono font-bold text-[#0F172A]">
+                              <td className="py-2.5 px-3 sm:py-3 sm:px-4 font-mono font-bold text-[#0F172A]">
                                 ₺{(parseFloat(item.price || 0) * item.qty).toFixed(2)}
                               </td>
-                              <td className="py-3 px-4 text-center">
+                              <td className="py-2.5 px-3 sm:py-3 sm:px-4 text-center">
                                 {returnedQty > 0 ? (
-                                  <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-red-50 text-red-600 border border-red-200 inline-flex items-center gap-1">
-                                    <RotateCcw size={11} /> تم إرجاع ({returnedQty})
+                                  <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[11px] sm:text-xs font-bold bg-red-50 text-red-600 border border-red-200 inline-flex items-center gap-1 whitespace-nowrap">
+                                    <RotateCcw className="w-3 h-3" /> تم إرجاع ({returnedQty})
                                   </span>
                                 ) : (
-                                  <span className="text-xs text-slate-500 font-medium">سليم (بدون إرجاع)</span>
+                                  <span className="text-[11px] sm:text-xs text-slate-500 font-medium whitespace-nowrap">سليم (بدون إرجاع)</span>
                                 )}
                               </td>
                             </tr>
@@ -740,53 +740,53 @@ export default function POSHistoryLog() {
                   </div>
                 </div>
 
-                {/* Return Action Section */}
-                <div className="pt-4 border-t border-slate-100">
+                {/* Return Action Section - Mobile Adapted */}
+                <div className="pt-3 sm:pt-4 border-t border-slate-100">
                   {!returnModalOpen ? (
-                    <div className="flex items-center justify-between bg-slate-50 border border-slate-200 p-4 rounded-2xl">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-50 border border-slate-200 p-3.5 sm:p-4 rounded-xl sm:rounded-2xl gap-3">
                       <div className="space-y-0.5">
-                        <h4 className="font-bold text-[#0F172A] text-sm flex items-center gap-2">
-                          <RotateCcw size={16} className="text-amber-500" /> هل ترغب في إرجاع منتجات من هذه الفاتورة؟
+                        <h4 className="font-bold text-[#0F172A] text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2">
+                          <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 shrink-0" /> هل ترغب في إرجاع منتجات من هذه الفاتورة؟
                         </h4>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-[11px] sm:text-xs text-slate-500">
                           يمكنك إرجاع منتج واحد، عدة منتجات، أو كامل الفاتورة مع استرداد المبلغ وتحديث المخزون فوراً.
                         </p>
                       </div>
                       <button
                         onClick={() => handleOpenReturnModal(selectedOrder)}
-                        className="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-md shadow-red-600/20 flex items-center gap-2 whitespace-nowrap"
+                        className="bg-red-600 hover:bg-red-700 text-white font-bold px-5 py-2.5 sm:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm transition-all shadow-md shadow-red-600/20 flex items-center justify-center gap-2 whitespace-nowrap w-full sm:w-auto"
                       >
-                        <RotateCcw size={16} /> إرجاع المنتجات
+                        <RotateCcw className="w-4 h-4" /> إرجاع المنتجات
                       </button>
                     </div>
                   ) : (
-                    <div className="bg-white border border-red-200 rounded-2xl p-5 space-y-5 animate-in fade-in duration-150 shadow-lg">
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                        <h4 className="font-bold text-[#0F172A] text-base flex items-center gap-2">
-                          <RotateCcw size={18} className="text-red-600" /> اختيار المنتجات المراد إرجاعها
+                    <div className="bg-white border border-red-200 rounded-xl sm:rounded-2xl p-4 sm:p-5 space-y-4 sm:space-y-5 animate-in fade-in duration-150 shadow-lg">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-3 gap-2">
+                        <h4 className="font-bold text-[#0F172A] text-sm sm:text-base flex items-center gap-1.5 sm:gap-2">
+                          <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 shrink-0" /> اختيار المنتجات المراد إرجاعها
                         </h4>
                         <button
                           onClick={handleSelectAllForReturn}
-                          className="text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg transition-colors border border-slate-200"
+                          className="text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg transition-colors border border-slate-200 w-full sm:w-auto text-center"
                         >
                           إرجاع كامل الفاتورة
                         </button>
                       </div>
 
-                      <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                      <div className="space-y-2 sm:space-y-3 max-h-60 overflow-y-auto pr-1">
                         {selectedOrder.items?.map((item: any) => {
                           const maxReturnable = item.qty - (item.returnedQty || 0);
                           const currentVal = returnItemsState[item.id] || 0;
 
                           return (
-                            <div key={item.id} className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200">
-                              <div className="flex items-center gap-3">
-                                <span className="font-bold text-sm text-[#0F172A]">{item.name}</span>
-                                <span className="text-xs text-slate-400">({item.qty} قطعة في الفاتورة - متاح للإرجاع: {maxReturnable})</span>
+                            <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between bg-slate-50 p-2.5 sm:p-3 rounded-xl border border-slate-200 gap-2">
+                              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                                <span className="font-bold text-xs sm:text-sm text-[#0F172A] truncate">{item.name}</span>
+                                <span className="text-[11px] sm:text-xs text-slate-400 shrink-0">({item.qty} في الفاتورة - متاح: {maxReturnable})</span>
                               </div>
 
                               {maxReturnable > 0 ? (
-                                <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200">
+                                <div className="flex items-center justify-end gap-2 bg-white p-1 rounded-lg border border-slate-200 self-end sm:self-auto">
                                   <button
                                     type="button"
                                     onClick={() => setReturnItemsState({ ...returnItemsState, [item.id]: Math.min(maxReturnable, currentVal + 1) })}
@@ -800,20 +800,20 @@ export default function POSHistoryLog() {
                                   >-</button>
                                 </div>
                               ) : (
-                                <span className="text-xs font-bold text-slate-400">تم إرجاعه بالكامل</span>
+                                <span className="text-xs font-bold text-slate-400 self-end sm:self-auto">تم إرجاعه بالكامل</span>
                               )}
                             </div>
                           );
                         })}
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
-                        <div className="space-y-1.5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 pt-2 border-t border-slate-100">
+                        <div className="space-y-1 sm:space-y-1.5">
                           <label className="text-xs font-bold text-slate-600">سبب الإرجاع</label>
                           <select
                             value={returnReason}
                             onChange={(e) => setReturnReason(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-[#0F172A] text-sm focus:outline-none focus:border-red-500 font-medium"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-[#0F172A] text-xs sm:text-sm focus:outline-none focus:border-red-500 font-medium"
                           >
                             <option value="تالف / عيب مصنعي">تالف / عيب مصنعي</option>
                             <option value="عدم رغبة العميل / تبديل">عدم رغبة العميل / تبديل</option>
@@ -823,39 +823,39 @@ export default function POSHistoryLog() {
                         </div>
 
                         {returnReason === "أخرى" && (
-                          <div className="space-y-1.5">
+                          <div className="space-y-1 sm:space-y-1.5">
                             <label className="text-xs font-bold text-slate-600">توضيح السبب</label>
                             <input
                               type="text"
                               placeholder="اكتب سبب الإرجاع هنا..."
                               value={customReturnReason}
                               onChange={(e) => setCustomReturnReason(e.target.value)}
-                              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-[#0F172A] text-sm focus:outline-none focus:border-red-500 font-medium"
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-[#0F172A] text-xs sm:text-sm focus:outline-none focus:border-red-500 font-medium"
                             />
                           </div>
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-slate-100 gap-3">
                         <div>
                           <span className="text-xs text-slate-500 block">إجمالي المبلغ المسترجع الآن:</span>
-                          <span className="text-xl font-black text-red-600 font-mono">₺{calculateCurrentRefundTotal().toFixed(2)}</span>
+                          <span className="text-lg sm:text-xl font-black text-red-600 font-mono">₺{calculateCurrentRefundTotal().toFixed(2)}</span>
                         </div>
 
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 w-full sm:w-auto justify-end">
                           <button
                             type="button"
                             onClick={() => setReturnModalOpen(false)}
-                            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs"
+                            className="flex-1 sm:flex-none px-4 py-2 sm:py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs text-center"
                           >
                             إلغاء
                           </button>
                           <button
                             type="button"
                             onClick={handleExecuteReturn}
-                            className="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-2 rounded-xl text-xs transition-all shadow-md shadow-red-600/20 flex items-center gap-2"
+                            className="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white font-bold px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl text-xs transition-all shadow-md shadow-red-600/20 flex items-center justify-center gap-1.5"
                           >
-                            <Check size={16} /> تأكيد الإرجاع واسترداد الأموال
+                            <Check className="w-4 h-4 shrink-0" /> تأكيد الإرجاع واسترداد الأموال
                           </button>
                         </div>
                       </div>

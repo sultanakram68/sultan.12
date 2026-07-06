@@ -29,18 +29,10 @@ export default function NotFoundPage() {
         <div className="flex flex-col sm:flex-row gap-3">
           <Link
             href="/"
-            className="flex-1 bg-white text-[#0a0f0d] hover:bg-slate-200 font-bold py-3.5 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] text-sm"
+            className="w-full bg-white text-[#0a0f0d] hover:bg-slate-200 font-bold py-3.5 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] text-sm"
           >
             <Home size={18} />
-            الرئيسية
-          </Link>
-          
-          <Link
-            href="/pos"
-            className="flex-1 bg-white/10 hover:bg-white/20 text-white border border-white/10 font-bold py-3.5 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 active:scale-[0.98] text-sm"
-          >
-            نظام البوس (POS)
-            <ArrowRight size={18} className="rotate-180" />
+            العودة إلى الصفحة الرئيسية
           </Link>
         </div>
       </div>

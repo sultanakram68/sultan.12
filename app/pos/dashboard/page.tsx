@@ -1,12 +1,25 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { TrendingUp, Users, ShoppingBag, AlertCircle, DollarSign, Package, ArrowUpRight, ArrowDownRight, Clock } from "lucide-react";
 import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function POSDashboardCorporate() {
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isInternalNav = sessionStorage.getItem("pos_internal_nav") === "true";
+      if (!isInternalNav) {
+        router.replace("/pos");
+        return;
+      }
+    }
+  }, [router]);
+
   const [stats, setStats] = useState({
     todaySales: 0,
     weekSales: 0,

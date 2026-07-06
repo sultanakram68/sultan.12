@@ -49,6 +49,23 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
   }, [router, pathname]);
 
   useEffect(() => {
+    // If entering POS site from outside/new and landing on /pos/dashboard, redirect to /pos
+    if (typeof window !== "undefined") {
+      const isInternalNav = sessionStorage.getItem("pos_internal_nav") === "true";
+      if (window.location.pathname === "/pos/dashboard" && !isInternalNav) {
+        router.replace("/pos");
+      }
+      sessionStorage.setItem("pos_internal_nav", "true");
+
+      const handleUnload = () => {
+        sessionStorage.removeItem("pos_internal_nav");
+      };
+      window.addEventListener("beforeunload", handleUnload);
+      return () => window.removeEventListener("beforeunload", handleUnload);
+    }
+  }, [router]);
+
+  useEffect(() => {
     // Eagerly prefetch all POS routes in the background for world-class instantaneous (0ms) navigation speed!
     const routes = [
       "/pos",
@@ -154,7 +171,10 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
                 prefetch={true}
                 onMouseEnter={() => router.prefetch(item.path)}
                 onTouchStart={() => router.prefetch(item.path)}
-                onClick={() => setSidebarOpen(false)}
+                onClick={() => {
+                  if (typeof window !== "undefined") sessionStorage.setItem("pos_internal_nav", "true");
+                  setSidebarOpen(false);
+                }}
                 className={`flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 font-medium
                   ${isActive 
                     ? 'bg-[#1E3A8A]/5 text-[#1E3A8A] shadow-sm font-bold' 

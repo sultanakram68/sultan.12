@@ -24,14 +24,14 @@ export default function POSPurchasesCorporate() {
   const scannerRef = useRef<any>(null);
 
   useEffect(() => {
-    const unsubProducts = onSnapshot(collection(db, "products"), (snap) => {
+    const unsubProducts = onSnapshot(collection(db, "products"), (snap: any) => {
       const fetched: any[] = [];
-      snap.forEach((doc) => fetched.push({ id: doc.id, ...doc.data() }));
+      snap.forEach((doc: any) => fetched.push({ id: doc.id, ...doc.data() }));
       setProducts(fetched);
     });
-    const unsubSuppliers = onSnapshot(collection(db, "suppliers"), (snap) => {
+    const unsubSuppliers = onSnapshot(collection(db, "suppliers"), (snap: any) => {
       const fetched: any[] = [];
-      snap.forEach((doc) => fetched.push({ id: doc.id, ...doc.data() }));
+      snap.forEach((doc: any) => fetched.push({ id: doc.id, ...doc.data() }));
       setSuppliers(fetched);
     });
     return () => { unsubProducts(); unsubSuppliers(); };
@@ -54,16 +54,35 @@ export default function POSPurchasesCorporate() {
   const playCashierBeep = () => {
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
+      
+      const compressor = audioCtx.createDynamicsCompressor();
+      compressor.threshold.setValueAtTime(-24, audioCtx.currentTime);
+      compressor.knee.setValueAtTime(30, audioCtx.currentTime);
+      compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+      compressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
+      compressor.release.setValueAtTime(0.25, audioCtx.currentTime);
+      compressor.connect(audioCtx.destination);
+
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(2600, audioCtx.currentTime); // Supermarket scanner frequency
-      gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.12);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.12);
+
+      osc1.type = "sine";
+      osc2.type = "triangle";
+      osc1.frequency.setValueAtTime(1760, audioCtx.currentTime);
+      osc2.frequency.setValueAtTime(3520, audioCtx.currentTime);
+
+      gain.gain.setValueAtTime(2.0, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.24);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(compressor);
+
+      osc1.start(audioCtx.currentTime);
+      osc2.start(audioCtx.currentTime);
+      osc1.stop(audioCtx.currentTime + 0.24);
+      osc2.stop(audioCtx.currentTime + 0.24);
     } catch (e) {
       console.error("Audio beep error:", e);
     }
@@ -118,18 +137,25 @@ export default function POSPurchasesCorporate() {
       const startWithConfig = (config: any) => {
         html5Qrcode.start(
           config,
-          { fps: 15, qrbox: { width: 250, height: 250 } },
+          { 
+            fps: 30, 
+            qrbox: { width: 250, height: 250 },
+            experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+            disableFlip: false
+          },
           (text: string) => {
+            if (!text || text.trim().length < 3) return;
+            const cleanText = text.trim();
             playCashierBeep();
             try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {}
             if (target === "form") {
-              setFormData((prev: any) => ({ ...prev, barcode: text }));
+              setFormData((prev: any) => ({ ...prev, barcode: cleanText }));
             } else {
-              const existingProduct = products.find(p => String(p.barcode || "") === String(text) || String(p.sku || "") === String(text));
+              const existingProduct = products.find(p => String(p.barcode || "").trim() === cleanText || String(p.sku || "").trim() === cleanText);
               if (existingProduct) {
                 setFormData({ ...existingProduct, id: existingProduct.id });
               } else {
-                setFormData({ id: "", name: "", barcode: text, sku: "", imageUrl: "", category: "هواتف وأجهزة ذكية", purchasePrice: "", wholesalePrice: "", price: "", stock: "", minStock: "", supplier: "" });
+                setFormData({ id: "", name: "", barcode: cleanText, sku: "", imageUrl: "", category: "هواتف وأجهزة ذكية", purchasePrice: "", wholesalePrice: "", price: "", stock: "", minStock: "", supplier: "" });
               }
               setIsFormOpen(true);
             }
@@ -190,10 +216,8 @@ export default function POSPurchasesCorporate() {
     }
   };
 
-  const toggleCamera = (target: "search" | "form" = "search") => {
-    if (isCameraOpen) {
-      setIsCameraOpen(false);
-      setScannerError(null);
+  const stopCameraTracks = () => {
+    try {
       if (scannerRef.current) {
         try {
           scannerRef.current.stop().then(() => {
@@ -205,6 +229,35 @@ export default function POSPurchasesCorporate() {
           try { scannerRef.current.clear(); } catch(err) {}
         }
       }
+    } catch(e) {}
+
+    try {
+      const videoElements = document.querySelectorAll("#reader video, video");
+      videoElements.forEach((video: any) => {
+        if (video.srcObject) {
+          const stream = video.srcObject as MediaStream;
+          stream.getTracks().forEach(track => {
+            try { track.stop(); track.enabled = false; } catch(err) {}
+          });
+          video.srcObject = null;
+        }
+      });
+    } catch(e) {}
+
+    try {
+      if (navigator.mediaDevices && (window as any).localMediaStream) {
+        ((window as any).localMediaStream as MediaStream).getTracks().forEach(track => {
+          try { track.stop(); track.enabled = false; } catch(err) {}
+        });
+      }
+    } catch(e) {}
+  };
+
+  const toggleCamera = (target: "search" | "form" = "search") => {
+    if (isCameraOpen) {
+      stopCameraTracks();
+      setIsCameraOpen(false);
+      setScannerError(null);
     } else {
       setCameraTarget(target);
       setIsCameraOpen(true);
@@ -213,34 +266,42 @@ export default function POSPurchasesCorporate() {
   };
 
   useEffect(() => {
-    return () => {
-      if (scannerRef.current) {
-        try {
-          scannerRef.current.stop().then(() => {
-            try { scannerRef.current.clear(); } catch(e) {}
-          }).catch(() => {
-            try { scannerRef.current.clear(); } catch(e) {}
-          });
-        } catch(e) {}
+    const handleLeave = () => {
+      if (isCameraOpen) {
+        stopCameraTracks();
+        setIsCameraOpen(false);
       }
-      try {
-        const videoElements = document.querySelectorAll("#reader video, video");
-        videoElements.forEach(video => {
-          if (video.srcObject) {
-            const stream = video.srcObject as MediaStream;
-            stream.getTracks().forEach(track => {
-              try { track.stop(); } catch(err) {}
-            });
-          }
-        });
-      } catch(e) {}
+    };
+    window.addEventListener("popstate", handleLeave);
+    window.addEventListener("pagehide", handleLeave);
+    window.addEventListener("beforeunload", handleLeave);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && isCameraOpen) {
+        stopCameraTracks();
+        setIsCameraOpen(false);
+      }
+    });
+    return () => {
+      window.removeEventListener("popstate", handleLeave);
+      window.removeEventListener("pagehide", handleLeave);
+      window.removeEventListener("beforeunload", handleLeave);
+      stopCameraTracks();
     };
   }, [isCameraOpen]);
 
   const filteredProducts = products.filter(p => String(p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || String(p.barcode || "").includes(searchQuery));
 
+  const duplicateProduct = products.find(p => p.id !== formData.id && (
+    (formData.barcode && String(formData.barcode).trim() !== "" && String(formData.barcode).trim() !== "-" && (String(p.barcode || "").trim() === String(formData.barcode).trim() || String(p.sku || "").trim() === String(formData.barcode).trim())) ||
+    (formData.sku && String(formData.sku).trim() !== "" && String(formData.sku).trim() !== "-" && (String(p.sku || "").trim() === String(formData.sku).trim() || String(p.barcode || "").trim() === String(formData.sku).trim()))
+  ));
+
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (duplicateProduct) {
+      alert(`خطأ: الكود مسجل مسبقاً باسم المنتج (${duplicateProduct.name})! لا يمكنك تكرار المنتجات في المخزون.`);
+      return;
+    }
     try {
       if (formData.id) {
         await updateDoc(doc(db, "products", formData.id), {
@@ -295,7 +356,7 @@ export default function POSPurchasesCorporate() {
                   type="text"
                   placeholder="امسح الباركود لإضافة مشتريات جديدة أو ابحث عن منتج..."
                   className="w-full bg-white border border-slate-200 rounded-xl py-3.5 pr-12 pl-12 text-[#0F172A] focus:outline-none focus:border-[#1E3A8A] focus:ring-4 focus:ring-[#1E3A8A]/10 transition-all shadow-sm font-medium"
-                  value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} autoFocus
+                  value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300" />
               </div>
@@ -346,7 +407,7 @@ export default function POSPurchasesCorporate() {
                     </button>
                   </div>
                 )}
-                <div id="reader" className="w-full max-w-sm rounded-2xl overflow-hidden border border-slate-600 bg-black min-h-[250px]" />
+                <div id="reader" className="w-full max-w-sm rounded-2xl overflow-hidden border border-slate-600 bg-black min-h-[250px] [&_video]:scale-[1.5] [&_video]:origin-center" />
                 <p className="text-xs text-slate-400 mt-3 text-center">سيتم التقاط الباركود وإدخاله في شريط البحث تلقائياً لفتح نموذج الإضافة أو التعديل</p>
               </div>
             )}
@@ -412,6 +473,16 @@ export default function POSPurchasesCorporate() {
                 </button>
               </div>
               
+              {duplicateProduct && (
+                <div className="mb-4 bg-red-600 text-white px-4 py-3 rounded-xl shadow-lg flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200 border border-red-500 font-bold text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl animate-pulse">⚠️</span>
+                    <span>تنبيه: الكود <span className="font-mono bg-red-700 px-2 py-0.5 rounded text-amber-300 mx-1">#{formData.barcode || formData.sku}</span> مسجل مسبقاً للمنتج: <span className="underline decoration-amber-300 font-black">{duplicateProduct.name}</span>! لا يمكنك إضافته لمنع تكرار المنتج.</span>
+                  </div>
+                  <span className="text-xs bg-red-700/90 px-2.5 py-1 rounded-lg text-red-100 whitespace-nowrap">كود مكرر</span>
+                </div>
+              )}
+
               <form onSubmit={handleSaveProduct} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   
@@ -480,7 +551,7 @@ export default function POSPurchasesCorporate() {
                             </button>
                           </div>
                         )}
-                        <div id="reader" className="w-full rounded-xl overflow-hidden border border-slate-600 bg-black min-h-[200px]" />
+                        <div id="reader" className="w-full rounded-xl overflow-hidden border border-slate-600 bg-black min-h-[200px] [&_video]:scale-[1.5] [&_video]:origin-center" />
                         <p className="text-[11px] text-slate-400 mt-2 text-center">سيتم تعبئة حقل الباركود تلقائياً عند قراءته</p>
                       </div>
                     )}
@@ -541,7 +612,7 @@ export default function POSPurchasesCorporate() {
 
                 <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
                   <button type="button" onClick={() => { setIsFormOpen(false); if (isCameraOpen) setIsCameraOpen(false); }} className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-colors">إلغاء</button>
-                  <button type="submit" className="px-8 py-2.5 bg-[#1E3A8A] hover:bg-[#152960] text-white rounded-xl font-bold transition-colors flex items-center gap-2 shadow-sm">
+                  <button type="submit" disabled={!!duplicateProduct} className="px-8 py-2.5 bg-[#1E3A8A] hover:bg-[#152960] disabled:bg-red-400 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-colors flex items-center gap-2 shadow-sm">
                     <Save size={18} /> حفظ المنتج
                   </button>
                 </div>

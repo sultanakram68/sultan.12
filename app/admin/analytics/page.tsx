@@ -2,54 +2,93 @@
 
 import React, { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { motion } from "framer-motion";
 import { 
   DollarSign, ShoppingCart, Users, Activity, 
-  ArrowUpRight, ArrowDownRight, TrendingUp
+  ArrowUpRight, TrendingUp, Package
 } from "lucide-react";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar
 } from "recharts";
 
-const MOCK_REVENUE_DATA = [
-  { name: 'الإثنين', revenue: 4000, orders: 24 },
-  { name: 'الثلاثاء', revenue: 3000, orders: 18 },
-  { name: 'الأربعاء', revenue: 5500, orders: 35 },
-  { name: 'الخميس', revenue: 2780, orders: 15 },
-  { name: 'الجمعة', revenue: 8900, orders: 58 },
-  { name: 'السبت', revenue: 10900, orders: 75 },
-  { name: 'الأحد', revenue: 7490, orders: 48 },
-];
-
 export default function AnalyticsDashboard() {
   const [stats, setStats] = useState({
-    translations: 0,
-    products: 0,
-    news: 0,
+    totalRevenue: 0,
+    ordersCount: 0,
+    productsCount: 0,
+    customersCount: 0,
+    todayOrders: 0,
   });
   
+  const [chartData, setChartData] = useState<any[]>([]);
+  
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const transRef = doc(db, "translations", "ar");
-        const transDoc = await getDoc(transRef);
-        const transCount = transDoc.exists() ? Object.keys(transDoc.data()).length : 0;
-
-        const prodSnap = await getDocs(collection(db, "products"));
-        const prodCount = prodSnap.size;
-
-        setStats({
-          translations: transCount,
-          products: prodCount,
-          news: 12,
-        });
-      } catch (error) {
-        console.error("Error fetching stats", error);
+    // 1. جلب بيانات الطلبات الحقيقية ومبيعات الأيام السبعة الأخيرة من فايربيس
+    const unsubOrders = onSnapshot(query(collection(db, "orders"), orderBy("createdAt", "desc")), (snap) => {
+      let totalRev = 0;
+      let todayOrd = 0;
+      const now = new Date();
+      
+      const daysMap: { [key: string]: { name: string, revenue: number, orders: number } } = {};
+      const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+      
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toLocaleDateString();
+        daysMap[dateStr] = {
+          name: dayNames[d.getDay()],
+          revenue: 0,
+          orders: 0
+        };
       }
+
+      snap.forEach((doc) => {
+        const data = doc.data();
+        const amount = Number(data.total) || 0;
+        totalRev += amount;
+        
+        if (data.createdAt) {
+          const orderDate = new Date(data.createdAt);
+          if (orderDate.toLocaleDateString() === now.toLocaleDateString()) {
+            todayOrd++;
+          }
+          const dateStr = orderDate.toLocaleDateString();
+          if (daysMap[dateStr]) {
+            daysMap[dateStr].revenue += amount;
+            daysMap[dateStr].orders += 1;
+          }
+        }
+      });
+
+      setChartData(Object.values(daysMap));
+      setStats(prev => ({
+        ...prev,
+        totalRevenue: totalRev,
+        ordersCount: snap.size,
+        todayOrders: todayOrd
+      }));
+    }, (err) => {
+      console.error("Error fetching real orders for analytics:", err);
+    });
+
+    // 2. جلب العدد الحقيقي للمنتجات في المتجر
+    const unsubProducts = onSnapshot(collection(db, "products"), (snap) => {
+      setStats(prev => ({ ...prev, productsCount: snap.size }));
+    });
+
+    // 3. جلب العدد الحقيقي للعملاء المسجلين
+    const unsubCustomers = onSnapshot(collection(db, "customers"), (snap) => {
+      setStats(prev => ({ ...prev, customersCount: snap.size }));
+    });
+
+    return () => {
+      unsubOrders();
+      unsubProducts();
+      unsubCustomers();
     };
-    fetchStats();
   }, []);
 
   const containerVariants = {
@@ -74,8 +113,8 @@ export default function AnalyticsDashboard() {
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b border-zinc-800/50 pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-100 tracking-tight mb-1">الإحصائيات والأرباح</h1>
-          <p className="text-zinc-500 text-sm">مراقبة الأداء والمبيعات وتحليل الإيرادات.</p>
+          <h1 className="text-2xl font-bold text-zinc-100 tracking-tight mb-1">الإحصائيات والأرباح (بيانات حقيقية 100%)</h1>
+          <p className="text-zinc-500 text-sm">مراقبة الأداء والمبيعات وتحليل الإيرادات الحقيقية من قاعدة بيانات فايربيس.</p>
         </div>
         <div className="flex items-center gap-3">
           <button className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 rounded-md border border-zinc-800 transition-colors text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-zinc-700 active:scale-95">
@@ -84,61 +123,61 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
 
-      {/* Stats Cards - Minimalist Solid */}
+      {/* Stats Cards - Real Firebase Data */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         
         <motion.div variants={itemVariants} className="bg-zinc-900/80 border border-zinc-800/80 rounded-xl p-5 relative overflow-hidden group hover:border-zinc-700 transition-colors">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-zinc-400 text-xs font-medium">إجمالي الأرباح</h3>
-            <DollarSign className="w-4 h-4 text-zinc-500" />
+            <h3 className="text-zinc-400 text-xs font-medium">إجمالي الأرباح الحقيقية</h3>
+            <DollarSign className="w-4 h-4 text-emerald-500" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-zinc-100 mb-1">$45,231.89</div>
+            <div className="text-2xl font-bold text-zinc-100 mb-1">${stats.totalRevenue.toLocaleString()}</div>
             <div className="flex items-center text-[11px] font-medium text-emerald-500">
-              <ArrowUpRight className="w-3 h-3 mr-1" />
-              <span>+20.1% عن الشهر الماضي</span>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="bg-zinc-900/80 border border-zinc-800/80 rounded-xl p-5 relative overflow-hidden group hover:border-zinc-700 transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-zinc-400 text-xs font-medium">الطلبات</h3>
-            <ShoppingCart className="w-4 h-4 text-zinc-500" />
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-zinc-100 mb-1">+{stats.products > 0 ? stats.products * 14 : 350}</div>
-            <div className="flex items-center text-[11px] font-medium text-emerald-500">
-              <ArrowUpRight className="w-3 h-3 mr-1" />
-              <span>+18.2% عن الشهر الماضي</span>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div variants={itemVariants} className="bg-zinc-900/80 border border-zinc-800/80 rounded-xl p-5 relative overflow-hidden group hover:border-zinc-700 transition-colors">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-zinc-400 text-xs font-medium">النشاط المباشر</h3>
-            <Activity className="w-4 h-4 text-zinc-500" />
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-zinc-100 mb-1">573</div>
-            <div className="flex items-center text-[11px] font-medium text-zinc-500">
               <TrendingUp className="w-3 h-3 mr-1" />
-              <span>+201 منذ الساعة الماضية</span>
+              <span>إيرادات كافة الطلبات المسجلة</span>
             </div>
           </div>
         </motion.div>
 
         <motion.div variants={itemVariants} className="bg-zinc-900/80 border border-zinc-800/80 rounded-xl p-5 relative overflow-hidden group hover:border-zinc-700 transition-colors">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-zinc-400 text-xs font-medium">عملاء جدد</h3>
-            <Users className="w-4 h-4 text-zinc-500" />
+            <h3 className="text-zinc-400 text-xs font-medium">إجمالي الطلبات</h3>
+            <ShoppingCart className="w-4 h-4 text-blue-500" />
           </div>
           <div>
-            <div className="text-2xl font-bold text-zinc-100 mb-1">24</div>
-            <div className="flex items-center text-[11px] font-medium text-red-500">
-              <ArrowDownRight className="w-3 h-3 mr-1" />
-              <span>-4.5% عن الأسبوع الماضي</span>
+            <div className="text-2xl font-bold text-zinc-100 mb-1">{stats.ordersCount}</div>
+            <div className="flex items-center text-[11px] font-medium text-blue-400">
+              <ArrowUpRight className="w-3 h-3 mr-1" />
+              <span>{stats.todayOrders} طلبات جديدة اليوم</span>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="bg-zinc-900/80 border border-zinc-800/80 rounded-xl p-5 relative overflow-hidden group hover:border-zinc-700 transition-colors">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-zinc-400 text-xs font-medium">منتجات المتجر</h3>
+            <Package className="w-4 h-4 text-purple-500" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-zinc-100 mb-1">{stats.productsCount}</div>
+            <div className="flex items-center text-[11px] font-medium text-purple-400">
+              <Activity className="w-3 h-3 mr-1" />
+              <span>منتجات فعالة في المخزون</span>
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div variants={itemVariants} className="bg-zinc-900/80 border border-zinc-800/80 rounded-xl p-5 relative overflow-hidden group hover:border-zinc-700 transition-colors">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-zinc-400 text-xs font-medium">قاعدة العملاء</h3>
+            <Users className="w-4 h-4 text-amber-500" />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-zinc-100 mb-1">{stats.customersCount}</div>
+            <div className="flex items-center text-[11px] font-medium text-amber-400">
+              <TrendingUp className="w-3 h-3 mr-1" />
+              <span>عملاء مسجلين في النظام</span>
             </div>
           </div>
         </motion.div>
@@ -149,10 +188,10 @@ export default function AnalyticsDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-7 gap-4 mt-6">
         
         <motion.div variants={itemVariants} className="lg:col-span-4 bg-zinc-900/80 border border-zinc-800/80 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-zinc-300 mb-4">تحليل الأرباح</h3>
+          <h3 className="text-sm font-semibold text-zinc-300 mb-4">تحليل الأرباح اليومية (آخر 7 أيام)</h3>
           <div className="h-[280px] w-full" dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={MOCK_REVENUE_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
@@ -174,10 +213,10 @@ export default function AnalyticsDashboard() {
         </motion.div>
 
         <motion.div variants={itemVariants} className="lg:col-span-3 bg-zinc-900/80 border border-zinc-800/80 rounded-xl p-5">
-          <h3 className="text-sm font-semibold text-zinc-300 mb-4">المبيعات حسب التصنيف</h3>
+          <h3 className="text-sm font-semibold text-zinc-300 mb-4">عدد الطلبات اليومية (آخر 7 أيام)</h3>
           <div className="h-[280px] w-full" dir="ltr">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={MOCK_REVENUE_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
                 <XAxis dataKey="name" stroke="#71717a" fontSize={11} tickLine={false} axisLine={false} dy={10} />
                 <YAxis stroke="#71717a" fontSize={11} tickLine={false} axisLine={false} />

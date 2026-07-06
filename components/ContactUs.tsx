@@ -5,17 +5,43 @@ import { MapPin, Phone, Mail, Send } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { useLanguage } from "@/context/LanguageContext";
+import { useSettings } from "@/hooks/useSettings";
+import { db } from "@/lib/firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 /**
- * Contact Us Section Component
+ * Contact Us Section Component (100% Real Firebase & WhatsApp Integration)
  */
 export function ContactUs() {
   const [submitted, setSubmitted] = React.useState(false);
+  const [name, setName] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [message, setMessage] = React.useState("");
   const { t } = useLanguage();
+  const { settings } = useSettings();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    try {
+      await addDoc(collection(db, "messages"), {
+        name,
+        email,
+        message,
+        createdAt: serverTimestamp()
+      });
+    } catch (err) {
+      console.error("Error saving message:", err);
+    }
+    
+    // إرسال الرسالة مباشرة إلى واتساب صاحب المتجر
+    const phone = settings.whatsappNumber || "905377903339";
+    const text = `رسالة جديدة من الموقع:\nالاسم: ${name}\nالبريد: ${email}\nالرسالة: ${message}`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, "_blank");
+
     setSubmitted(true);
+    setName("");
+    setEmail("");
+    setMessage("");
     setTimeout(() => setSubmitted(false), 4000);
   };
 
@@ -48,13 +74,13 @@ export function ContactUs() {
                 </div>
               </div>
 
-              <a href="tel:+905377903339" className="flex items-start gap-4 group cursor-pointer p-2 -m-2 rounded-xl hover:bg-neon-surface/40 transition-all">
+              <a href={`tel:+${settings.whatsappNumber || "905377903339"}`} className="flex items-start gap-4 group cursor-pointer p-2 -m-2 rounded-xl hover:bg-neon-surface/40 transition-all">
                 <div className="p-3 rounded-xl bg-neon-surface border border-neon-border text-neon-green shrink-0 group-hover:bg-neon-green group-hover:text-neon-dark transition-all duration-300 shadow-[0_0_10px_rgba(255,103,0,0.2)]">
                   <Phone className="w-6 h-6 animate-pulse" />
                 </div>
                 <div>
                   <h4 className="text-white font-bold group-hover:text-neon-green transition-colors">Direct Line / Call Now</h4>
-                  <p className="text-[#ff6700] font-mono font-bold text-base mt-1 tracking-wider">+90 537 790 33 39</p>
+                  <p className="text-[#ff6700] font-mono font-bold text-base mt-1 tracking-wider">+{settings.whatsappNumber || "90 537 790 33 39"}</p>
                 </div>
               </a>
 
@@ -80,7 +106,7 @@ export function ContactUs() {
                   <Send className="w-8 h-8" />
                 </div>
                 <h4 className="text-xl font-bold text-white">Message Transmitted!</h4>
-                <p className="text-gray-400 text-sm">Our concierge will contact you within 2 virtual hours.</p>
+                <p className="text-gray-400 text-sm">تم حفظ رسالتك وإرسالها عبر واتساب مباشرة لصاحب المتجر.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -89,7 +115,9 @@ export function ContactUs() {
                   <input
                     type="text"
                     required
-                    placeholder="Alex Rivera"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="الاسم الكريم"
                     className="w-full px-4 py-3 rounded-xl bg-neon-dark border border-neon-border text-white placeholder-gray-600 focus:outline-none focus:border-neon-green focus:ring-1 focus:ring-neon-green transition-all"
                   />
                 </div>
@@ -99,7 +127,9 @@ export function ContactUs() {
                   <input
                     type="email"
                     required
-                    placeholder="alex@cybernet.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="example@mail.com"
                     className="w-full px-4 py-3 rounded-xl bg-neon-dark border border-neon-border text-white placeholder-gray-600 focus:outline-none focus:border-neon-green focus:ring-1 focus:ring-neon-green transition-all"
                   />
                 </div>
@@ -109,13 +139,15 @@ export function ContactUs() {
                   <textarea
                     rows={4}
                     required
-                    placeholder="Tell us about your event or inquiry..."
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="اكتب رسالتك أو استفسارك هنا..."
                     className="w-full px-4 py-3 rounded-xl bg-neon-dark border border-neon-border text-white placeholder-gray-600 focus:outline-none focus:border-neon-green focus:ring-1 focus:ring-neon-green transition-all resize-none"
                   ></textarea>
                 </div>
 
                 <Button type="submit" variant="neon" size="lg" className="w-full gap-2 font-bold">
-                  <span>Transmit Message</span>
+                  <span>إرسال الرسالة</span>
                   <Send className="w-4 h-4" />
                 </Button>
               </form>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Barcode, QrCode, Plus, Minus, Trash2, CreditCard, Banknote, Printer, Save, Camera, X, Package, CheckCircle2 } from "lucide-react";
+import { Search, Barcode, QrCode, Plus, Minus, Trash2, CreditCard, Banknote, Printer, Save, Camera, X, Package, CheckCircle2, AlertCircle } from "lucide-react";
 import { collection, onSnapshot, doc, updateDoc, increment, setDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Script from "next/script";
@@ -12,6 +12,7 @@ export default function POSCashierCorporate() {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isLaserEnabled, setIsLaserEnabled] = useState(false);
   const [scannerError, setScannerError] = useState<string | null>(null);
+  const [unregisteredBarcode, setUnregisteredBarcode] = useState<string | null>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [cart, setCart] = useState<any[]>([]);
   
@@ -21,10 +22,22 @@ export default function POSCashierCorporate() {
   
   const searchInputRef = useRef<HTMLInputElement>(null);
   const scannerRef = useRef<any>(null);
+  const unregisteredTimerRef = useRef<any>(null);
   const lastScannedCodeRef = useRef<string>("");
   const lastScanTimeRef = useRef<number>(0);
+  const lastBeepTimeRef = useRef<number>(0);
+  const lastAddedIdRef = useRef<{ id: string; time: number }>({ id: "", time: 0 });
 
-  // Keyboard Shortcuts & Global Hardware Barcode Scanner (USB/Bluetooth) Detection
+  const triggerUnregisteredAlert = (code: string) => {
+    if (unregisteredTimerRef.current) clearTimeout(unregisteredTimerRef.current);
+    setUnregisteredBarcode(code);
+    try { navigator.vibrate && navigator.vibrate([300, 100, 300]); } catch (err) {}
+    unregisteredTimerRef.current = setTimeout(() => {
+      setUnregisteredBarcode(null);
+    }, 2000);
+  };
+
+  // Keyboard Shortcuts & Global Hardware Barcode Scanner (USB/Bluetooth) Detection - Full Focus & Speed
   useEffect(() => {
     let buffer = "";
     let lastTime = Date.now();
@@ -46,14 +59,13 @@ export default function POSCashierCorporate() {
 
       if (e.key === "Enter") {
         if (buffer.length >= 4) {
-          playCashierBeep();
           try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (err) {}
-          const match = products.find(p => String(p.barcode || "") === String(buffer) || String(p.sku || "") === String(buffer));
+          const match = products.find(p => String(p.barcode || "").trim() === String(buffer).trim() || String(p.sku || "").trim() === String(buffer).trim());
           if (match) {
             addToCart(match);
             setSearchQuery("");
           } else {
-            alert(`الباركود (${buffer}) غير مسجل في المنتجات!`);
+            triggerUnregisteredAlert(buffer);
           }
           buffer = "";
           return;
@@ -62,9 +74,9 @@ export default function POSCashierCorporate() {
         buffer += e.key;
       }
 
-      // Auto-focus search input if typing normal letters/numbers slowly and not in input
+      // Auto-focus search input immediately if typing or scanning and not inside another form field
       if (e.target instanceof HTMLInputElement && e.target !== searchInputRef.current) return;
-      if (e.key.length === 1 && searchInputRef.current && document.activeElement !== searchInputRef.current && buffer.length < 2) {
+      if (e.key.length === 1 && searchInputRef.current && document.activeElement !== searchInputRef.current) {
         searchInputRef.current.focus();
       }
     };
@@ -74,9 +86,9 @@ export default function POSCashierCorporate() {
 
   // Fetch products
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, "products"), (snap) => {
+    const unsubscribe = onSnapshot(collection(db, "products"), (snap: any) => {
       const fetched: any[] = [];
-      snap.forEach((doc) => fetched.push({ id: doc.id, ...doc.data() }));
+      snap.forEach((doc: any) => fetched.push({ id: doc.id, ...doc.data() }));
       setProducts(fetched);
     });
     return () => unsubscribe();
@@ -90,10 +102,10 @@ export default function POSCashierCorporate() {
 
   // Auto scan logic
   useEffect(() => {
-    if (searchQuery.length > 3 && !isCameraOpen) {
-      const exactMatch = products.find(p => String(p.barcode || "") === String(searchQuery) || String(p.sku || "") === String(searchQuery));
+    if (searchQuery.trim().length >= 3 && !isCameraOpen) {
+      const q = searchQuery.trim();
+      const exactMatch = products.find(p => String(p.barcode || "").trim() === q || String(p.sku || "").trim() === q);
       if (exactMatch) {
-        playCashierBeep();
         addToCart(exactMatch);
         setSearchQuery(""); 
       }
@@ -103,6 +115,12 @@ export default function POSCashierCorporate() {
   const isAdmin = true; // Assume admin for now
 
   const addToCart = (product: any) => {
+    const now = Date.now();
+    if (lastAddedIdRef.current.id === product.id && now - lastAddedIdRef.current.time < 350) {
+      return; // Prevent double addition from simultaneous scanner/keyboard events!
+    }
+    lastAddedIdRef.current = { id: product.id, time: now };
+
     if (product.stock <= 0) {
       alert("عذراً، هذا المنتج غير متوفر في المخزون!");
       return;
@@ -111,6 +129,8 @@ export default function POSCashierCorporate() {
       alert("خطأ: سعر البيع أقل من سعر الشراء. غير مسموح بهذه العملية بدون صلاحيات الإدارة.");
       return;
     }
+    playCashierBeep(); // Play VERY LOUD, crystal clear sound once!
+    try { navigator.vibrate && navigator.vibrate([150]); } catch (e) {}
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
@@ -147,18 +167,42 @@ export default function POSCashierCorporate() {
   const remaining = paidVal > 0 ? paidVal - total : 0;
 
   const playCashierBeep = () => {
+    const now = Date.now();
+    if (now - lastBeepTimeRef.current < 350) return; // Ensure single clean ring without annoying repetition!
+    lastBeepTimeRef.current = now;
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
+      
+      const compressor = audioCtx.createDynamicsCompressor();
+      compressor.threshold.setValueAtTime(-24, audioCtx.currentTime);
+      compressor.knee.setValueAtTime(30, audioCtx.currentTime);
+      compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
+      compressor.attack.setValueAtTime(0.003, audioCtx.currentTime);
+      compressor.release.setValueAtTime(0.25, audioCtx.currentTime);
+      compressor.connect(audioCtx.destination);
+
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(2600, audioCtx.currentTime); // Supermarket scanner frequency
-      gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.12);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.12);
+
+      // 1800 Hz + 3600 Hz harmonic: Clear supermarket laser register sound!
+      osc1.type = "sine";
+      osc2.type = "triangle";
+      osc1.frequency.setValueAtTime(1800, audioCtx.currentTime);
+      osc2.frequency.setValueAtTime(3600, audioCtx.currentTime);
+
+      // Boost volume to 3.5 (350% max loudness!) with crisp decay
+      gain.gain.setValueAtTime(3.5, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.22);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(compressor);
+
+      osc1.start(audioCtx.currentTime);
+      osc2.start(audioCtx.currentTime);
+      osc1.stop(audioCtx.currentTime + 0.22);
+      osc2.stop(audioCtx.currentTime + 0.22);
     } catch (e) {
       console.error("Audio beep error:", e);
     }
@@ -212,22 +256,29 @@ export default function POSCashierCorporate() {
       const startWithConfig = (config: any) => {
         html5Qrcode.start(
           config,
-          { fps: 15, qrbox: { width: 250, height: 250 } },
+          { 
+            fps: 30, 
+            qrbox: { width: 280, height: 280 }, 
+            aspectRatio: 1.0,
+            experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+            disableFlip: false
+          },
           (text: string) => {
+            if (!text || text.trim().length < 3) return;
+            const cleanText = text.trim();
             const now = Date.now();
-            if (text === lastScannedCodeRef.current && now - lastScanTimeRef.current < 2500) {
+            if (cleanText === lastScannedCodeRef.current && now - lastScanTimeRef.current < 2500) {
               return;
             }
-            lastScannedCodeRef.current = text;
+            lastScannedCodeRef.current = cleanText;
             lastScanTimeRef.current = now;
 
-            playCashierBeep();
             try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {}
-            const p = products.find(x => String(x.barcode || "") === String(text) || String(x.sku || "") === String(text));
+            const p = products.find(x => String(x.barcode || "").trim() === cleanText || String(x.sku || "").trim() === cleanText);
             if (p) {
               addToCart(p);
             } else {
-              alert(`الباركود (${text}) غير مسجل في المنتجات!`);
+              triggerUnregisteredAlert(cleanText);
             }
           },
           () => {}
@@ -250,21 +301,52 @@ export default function POSCashierCorporate() {
     }
   };
 
+  const stopCameraTracks = () => {
+    // 1. Immediately kill all video streams and tracks first so camera light turns off instantly without hanging!
+    try {
+      const videoElements = document.querySelectorAll("#reader video, video");
+      videoElements.forEach((video: any) => {
+        if (video.srcObject) {
+          const stream = video.srcObject as MediaStream;
+          stream.getTracks().forEach(track => {
+            try { track.stop(); track.enabled = false; } catch(err) {}
+          });
+          video.srcObject = null;
+        }
+      });
+    } catch(e) {}
+
+    try {
+      if (navigator.mediaDevices && (window as any).localMediaStream) {
+        ((window as any).localMediaStream as MediaStream).getTracks().forEach(track => {
+          try { track.stop(); track.enabled = false; } catch(err) {}
+        });
+      }
+    } catch(e) {}
+
+    // 2. Safely stop and clear Html5Qrcode instance without blocking or throwing
+    try {
+      if (scannerRef.current) {
+        const scanner = scannerRef.current;
+        scannerRef.current = null;
+        try {
+          scanner.stop().then(() => {
+            try { scanner.clear(); } catch(e) {}
+          }).catch(() => {
+            try { scanner.clear(); } catch(e) {}
+          });
+        } catch(e) {
+          try { scanner.clear(); } catch(err) {}
+        }
+      }
+    } catch(e) {}
+  };
+
   const toggleCamera = () => {
     if (isCameraOpen) {
       setIsCameraOpen(false);
+      stopCameraTracks();
       setScannerError(null);
-      if (scannerRef.current) {
-        try {
-          scannerRef.current.stop().then(() => {
-            try { scannerRef.current.clear(); } catch(e) {}
-          }).catch(() => {
-            try { scannerRef.current.clear(); } catch(e) {}
-          });
-        } catch(e) {
-          try { scannerRef.current.clear(); } catch(err) {}
-        }
-      }
     } else {
       setIsCameraOpen(true);
       setTimeout(() => startScanner(0), 300);
@@ -272,38 +354,56 @@ export default function POSCashierCorporate() {
   };
 
   useEffect(() => {
-    return () => {
-      if (scannerRef.current) {
-        try {
-          scannerRef.current.stop().then(() => {
-            try { scannerRef.current.clear(); } catch(e) {}
-          }).catch(() => {
-            try { scannerRef.current.clear(); } catch(e) {}
-          });
-        } catch(e) {}
+    const handleLeave = () => {
+      if (isCameraOpen) {
+        stopCameraTracks();
+        setIsCameraOpen(false);
       }
-      try {
-        const videoElements = document.querySelectorAll("#reader video, video");
-        videoElements.forEach(video => {
-          if (video.srcObject) {
-            const stream = video.srcObject as MediaStream;
-            stream.getTracks().forEach(track => {
-              try { track.stop(); } catch(err) {}
-            });
-          }
-        });
-      } catch(e) {}
+    };
+    window.addEventListener("popstate", handleLeave);
+    window.addEventListener("pagehide", handleLeave);
+    window.addEventListener("beforeunload", handleLeave);
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && isCameraOpen) {
+        stopCameraTracks();
+        setIsCameraOpen(false);
+      }
+    });
+    return () => {
+      window.removeEventListener("popstate", handleLeave);
+      window.removeEventListener("pagehide", handleLeave);
+      window.removeEventListener("beforeunload", handleLeave);
+      stopCameraTracks();
     };
   }, [isCameraOpen]);
 
-  const filteredProducts = searchQuery ? products.filter(p => String(p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || String(p.barcode || "").includes(searchQuery) || String(p.sku || "").includes(searchQuery)) : [];
+  const filteredProducts = searchQuery.trim() ? products.filter(p => {
+    const q = searchQuery.trim().toLowerCase();
+    const name = String(p.name || "").toLowerCase();
+    const barcode = String(p.barcode || "").toLowerCase().replace(/\s+/g, "");
+    const sku = String(p.sku || "").toLowerCase().replace(/\s+/g, "");
+    const cleanQ = q.replace(/\s+/g, "");
+    return name.includes(q) || barcode.includes(cleanQ) || sku.includes(cleanQ) || barcode.startsWith(cleanQ) || sku.startsWith(cleanQ);
+  }) : [];
 
   return (
     <>
       <div className="flex flex-col min-h-[calc(100vh-1rem)] lg:min-h-[calc(100vh-3rem)] w-full relative animate-in fade-in duration-500 font-sans print:h-auto pb-12">
         
         {/* Top Scanner & Search */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-4 shadow-sm relative flex flex-col md:flex-row gap-4 print:hidden transition-all">
+        <div className="mb-4 relative print:hidden">
+          {/* الرسالة الصغيرة فوق بطاقة الباركود لمدة ثانيتين */}
+          {unregisteredBarcode && (
+            <div className="mb-2 bg-red-600 text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200 border border-red-500 font-bold text-sm z-50">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 shrink-0 animate-pulse text-amber-300" />
+                <span>تنبيه: الباركود <span className="font-mono bg-red-700 px-2.5 py-0.5 rounded-md text-amber-300 mx-1 border border-red-500 shadow-inner">#{unregisteredBarcode}</span> غير مسجل في قائمة المنتجات!</span>
+              </div>
+              <span className="text-xs bg-red-700/90 px-2.5 py-1 rounded-lg text-red-100 whitespace-nowrap">يرجى إضافته للمخزون</span>
+            </div>
+          )}
+
+          <div className={`bg-white border rounded-2xl p-4 shadow-sm relative flex flex-col md:flex-row gap-4 transition-all duration-300 ${unregisteredBarcode ? 'border-red-500 ring-4 ring-red-500/30 bg-red-50/20' : 'border-slate-200'}`}>
           
           <div className="flex bg-slate-50 p-1.5 rounded-xl border border-slate-200 shrink-0 justify-between gap-1">
             {isLaserEnabled && (
@@ -321,10 +421,79 @@ export default function POSCashierCorporate() {
               ref={searchInputRef} type="text" placeholder="امسح الرمز أو ابحث يدوياً (التركيز تلقائي)..."
               className="w-full bg-slate-50 border border-slate-200 focus:border-[#1E3A8A] focus:bg-white focus:ring-4 focus:ring-[#1E3A8A]/10 rounded-xl py-3.5 pr-12 pl-12 text-[#0F172A] text-lg transition-all outline-none"
               value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && filteredProducts.length === 1) { addToCart(filteredProducts[0]); setSearchQuery(""); } }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && filteredProducts.length >= 1) { addToCart(filteredProducts[0]); setSearchQuery(""); } }}
             />
             <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5 transition-colors group-focus-within:text-[#1E3A8A]" />
+            
+            {/* بطاقة منسدلة للمنتجات المطابقة عند كتابة أول أرقام الكود أو الاسم */}
+            {searchQuery.trim().length > 0 && filteredProducts.length > 0 && (
+              <div className="absolute top-full right-0 left-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden z-50 max-h-96 overflow-y-auto divide-y divide-slate-100 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-500 flex justify-between items-center border-b border-slate-200">
+                  <span>المنتجات المطابقة للبحث ({filteredProducts.length})</span>
+                  <span className="text-[11px] bg-[#1E3A8A]/10 text-[#1E3A8A] font-extrabold px-2 py-0.5 rounded-md">اضغط على بطاقة المنتج أو Enter للإضافة فوراً</span>
+                </div>
+                {filteredProducts.map((product) => (
+                  <div
+                    key={product.id}
+                    onClick={() => {
+                      addToCart(product);
+                      setSearchQuery("");
+                    }}
+                    className="p-3.5 hover:bg-blue-50/80 transition-all cursor-pointer flex items-center justify-between gap-3 group/item border-l-4 border-transparent hover:border-l-[#1E3A8A]"
+                  >
+                    <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                      <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0 overflow-hidden p-1 shadow-sm">
+                        {product.imageUrl ? (
+                          <img src={product.imageUrl} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" />
+                        ) : (
+                          <Package size={20} className="text-slate-400" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-sm sm:text-base font-black text-[#0F172A] truncate group-hover/item:text-[#1E3A8A] transition-colors">
+                          {product.name}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                          {product.barcode && (
+                            <span className="inline-flex items-center gap-1 text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-2xs">
+                              <Barcode size={14} className="text-[#1E3A8A]" />
+                              {product.barcode}
+                            </span>
+                          )}
+                          {product.sku && (
+                            <span className="text-xs font-mono text-slate-400 font-semibold">
+                              SKU: {product.sku}
+                            </span>
+                          )}
+                          <span className={`text-xs font-bold px-2.5 py-0.5 rounded-lg ${product.stock > 0 ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                            المخزون: {product.stock}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-left shrink-0 flex items-center gap-3">
+                      <span className="text-lg sm:text-xl font-black font-mono text-[#1E3A8A] bg-slate-50 px-3 py-1 rounded-xl border border-slate-200">
+                        ₺{parseFloat(product.price || 0).toFixed(2)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(product);
+                          setSearchQuery("");
+                        }}
+                        className="w-10 h-10 rounded-xl bg-[#1E3A8A] text-white flex items-center justify-center hover:bg-blue-700 transition-all active:scale-95 shadow-md shadow-blue-900/20 group-hover/item:scale-105"
+                        title="إضافة للسلة"
+                      >
+                        <Plus size={20} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+        </div>
         </div>
 
         {isCameraOpen && (
@@ -346,7 +515,7 @@ export default function POSCashierCorporate() {
                 </button>
               </div>
             )}
-            <div id="reader" className="w-full max-w-sm rounded-2xl overflow-hidden border border-slate-600 bg-black min-h-[250px]" />
+            <div id="reader" className="w-full max-w-sm rounded-2xl overflow-hidden border border-slate-600 bg-black min-h-[250px] [&_video]:scale-[1.5] [&_video]:origin-center" />
             <p className="text-xs text-slate-400 mt-3 text-center font-semibold">بمجرد توجيه الكاميرا للباركود سيتم إضافته لسلة المشتريات فوراً</p>
           </div>
         )}
