@@ -5,10 +5,10 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  LayoutDashboard, Languages, Package, LogOut, Menu, X, 
-  Image as ImageIcon, Search, Bell, Activity
+import { motion } from "framer-motion";
+import {
+  LayoutDashboard, Languages, Package, LogOut,
+  Image as ImageIcon, Search, Bell, Activity, Settings, Store
 } from "lucide-react";
 
 const SIDEBAR_SECTIONS = [
@@ -29,8 +29,17 @@ const SIDEBAR_SECTIONS = [
   }
 ];
 
+// Floating mobile bottom dock — the raised blue circle slides to and takes
+// the icon of whichever item is currently active
+const BOTTOM_NAV_ITEMS = [
+  { name: "المخزون", icon: Package, href: "/admin/products" },
+  { name: "الإحصائيات", icon: Activity, href: "/admin/analytics" },
+  { name: "لوحة التحكم", icon: LayoutDashboard, href: "/admin" },
+  { name: "الإعدادات", icon: Settings, href: "/admin/settings" },
+  { name: "رجوع", icon: Store, href: "/" },
+];
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -42,10 +51,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     });
     return () => unsubscribe();
   }, [router]);
-
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [pathname]);
 
   const hasFirebaseKeys = !!process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
 
@@ -64,59 +69,61 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* Mobile Topbar */}
-      <div className={`md:hidden flex items-center justify-between bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/50 p-4 sticky top-0 z-40 ${!hasFirebaseKeys ? "mt-[45px]" : ""}`}>
-        <div className="flex items-center gap-2">
-          <div className="w-32 h-12 relative flex items-center justify-center">
-            <svg width="0" height="0" className="absolute hidden">
-              <filter id="admin-mobile-logo-filter">
-                <feColorMatrix
-                  type="matrix"
-                  values="
-                    0 0 0 0 0.2235
-                    0 0 0 0 1
-                    0 0 0 0 0.0784
-                    -1 -1 -1 0 2.5
-                  "
-                />
-              </filter>
-            </svg>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img 
-              src="/sultan.logo.jpg" 
-              alt="Logo" 
-              className="h-10 w-auto object-contain drop-shadow-[0_0_15px_rgba(57,255,20,0.5)]" 
-              style={{ filter: "url(#admin-mobile-logo-filter)", clipPath: "inset(3px)" }}
-            />
-          </div>
+      <div className={`md:hidden flex items-center justify-center bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-800/50 p-4 sticky top-0 z-40 ${!hasFirebaseKeys ? "mt-[45px]" : ""}`}>
+        <div className="w-32 h-12 relative flex items-center justify-center">
+          <svg width="0" height="0" className="absolute hidden">
+            <filter id="admin-mobile-logo-filter">
+              <feColorMatrix
+                type="matrix"
+                values="
+                  0 0 0 0 0.2235
+                  0 0 0 0 1
+                  0 0 0 0 0.0784
+                  -1 -1 -1 0 2.5
+                "
+              />
+            </filter>
+          </svg>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/sultan.logo.jpg"
+            alt="Logo"
+            className="h-10 w-auto object-contain drop-shadow-[0_0_15px_rgba(57,255,20,0.5)]"
+            style={{ filter: "url(#admin-mobile-logo-filter)", clipPath: "inset(3px)" }}
+          />
         </div>
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 text-zinc-400 hover:text-zinc-100 bg-zinc-900 rounded-md border border-zinc-800 transition-colors focus:ring-2 focus:ring-zinc-700"
-        >
-          {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
       </div>
 
-      {/* Mobile Overlay */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="md:hidden fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-        )}
-      </AnimatePresence>
+      {/* Floating Bottom Dock (mobile only) — the blue circle slides to and
+          adopts the icon of whichever item is active */}
+      <nav className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-xs">
+        <div className="relative flex items-end justify-between bg-[#1c1c1e]/95 backdrop-blur-xl border border-zinc-800/60 rounded-full px-4 pt-6 pb-3 shadow-2xl shadow-black/60">
+          {BOTTOM_NAV_ITEMS.map((item, i) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link key={i} href={item.href} className="relative flex-1 flex flex-col items-center gap-1">
+                {isActive && (
+                  <motion.div
+                    layoutId="admin-dock-active"
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    className="absolute -top-9 w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/40 border-4 border-zinc-950"
+                  >
+                    <item.icon className="w-6 h-6 text-white" />
+                  </motion.div>
+                )}
+                {!isActive && <item.icon className="w-5 h-5 text-zinc-500" />}
+                <span className={`text-[10px] transition-colors ${isActive ? "text-blue-400 mt-6" : "text-zinc-500"}`}>{item.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
 
-      {/* Sidebar - Linear/Vercel Minimalist Design */}
-      <aside className={`
-        fixed md:sticky top-0 right-0 h-screen overflow-y-auto custom-scrollbar
-        w-64 bg-zinc-950 border-l border-zinc-800/50 flex flex-col z-50
-        transition-transform duration-300 ease-out shadow-2xl md:shadow-none
-        ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full md:translate-x-0"}
-      `}>
+      {/* Sidebar - Linear/Vercel Minimalist Design (desktop only) */}
+      <aside className="
+        hidden md:sticky md:flex top-0 right-0 h-screen overflow-y-auto custom-scrollbar
+        w-64 bg-zinc-950 border-l border-zinc-800/50 flex-col z-50 shadow-none
+      ">
         {/* Logo Area */}
         <div className="p-4 flex justify-center items-center border-b border-zinc-800/50">
           <div className="w-52 h-24 relative flex items-center justify-center">
@@ -213,7 +220,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Content wrapper */}
-        <div className="relative flex-1 p-4 md:p-8 lg:p-10">
+        <div className="relative flex-1 p-4 pb-28 md:p-8 lg:p-10 md:pb-8 lg:pb-10">
           <div className="relative z-10 max-w-7xl mx-auto w-full">
             {children}
           </div>
