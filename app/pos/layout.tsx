@@ -79,7 +79,7 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
     routes.forEach(r => {
       try {
         router.prefetch(r);
-      } catch (e) {}
+      } catch (e) { }
     });
   }, [router]);
 
@@ -113,10 +113,10 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F172A] flex font-sans selection:bg-[#1E3A8A]/10 selection:text-[#1E3A8A] print:bg-white print:min-h-0 print:block" dir="rtl">
-      
+
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden print:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -124,7 +124,7 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar */}
       <aside className={`fixed lg:static top-0 right-0 h-full w-72 bg-white border-l border-slate-200 flex flex-col transition-transform duration-300 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] print:hidden ${sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}`}>
-        
+
         {/* SVG Filter for Logo */}
         <svg width="0" height="0" className="absolute hidden">
           <filter id="blue-logo-filter">
@@ -147,11 +147,11 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
             title="العودة إلى شاشة الكاشير الرئيسية"
             className="block cursor-pointer transition-transform hover:scale-105"
           >
-            <img 
-              src="/sultan.logo.jpg" 
-              alt="Logo" 
+            <img
+              src="/sultan.logo.jpg"
+              alt="Logo"
               className="h-28 w-auto pos-dark-ignore object-cover"
-              style={{ 
+              style={{
                 filter: "url(#blue-logo-filter)",
                 clipPath: "inset(14%)",
                 transform: "scale(1.4)"
@@ -165,8 +165,8 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
           {menuItems.map((item) => {
             const isActive = pathname === item.path;
             return (
-              <Link 
-                key={item.path} 
+              <Link
+                key={item.path}
                 href={item.path}
                 prefetch={true}
                 onMouseEnter={() => router.prefetch(item.path)}
@@ -176,8 +176,8 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
                   setSidebarOpen(false);
                 }}
                 className={`flex items-center justify-between px-4 py-3.5 rounded-xl transition-all duration-300 font-medium
-                  ${isActive 
-                    ? 'bg-[#1E3A8A]/5 text-[#1E3A8A] shadow-sm font-bold' 
+                  ${isActive
+                    ? 'bg-[#1E3A8A]/5 text-[#1E3A8A] shadow-sm font-bold'
                     : 'text-slate-500 hover:text-[#0F172A] hover:bg-slate-50'
                   }`}
               >
@@ -207,7 +207,7 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
                 <p className="text-xs text-slate-500 truncate w-24">{user?.email || 'admin@pos.com'}</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={handleLogout}
               className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
               title="تسجيل الخروج"
@@ -220,20 +220,20 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0 max-h-screen overflow-hidden print:max-h-none print:overflow-visible print:block print:w-full">
-        
+
         {/* Mobile Header */}
-        <header className="lg:hidden h-24 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-30 shadow-sm overflow-hidden print:hidden">
+        <header className="lg:hidden h-16 sm:h-20 bg-white border-b border-slate-200 flex items-center justify-between px-3 sm:px-4 z-30 shadow-sm overflow-hidden print:hidden">
           <div className="flex items-center justify-center h-full overflow-hidden w-32 -ml-2">
             <Link
               href="/pos"
               title="العودة إلى شاشة الكاشير الرئيسية"
               className="block cursor-pointer transition-transform hover:scale-105"
             >
-              <img 
-                src="/sultan.logo.jpg" 
-                alt="Logo" 
-                className="h-20 w-auto pos-dark-ignore object-cover"
-                style={{ 
+              <img
+                src="/sultan.logo.jpg"
+                alt="Logo"
+                className="h-14 sm:h-20 w-auto pos-dark-ignore object-cover"
+                style={{
                   filter: "url(#blue-logo-filter)",
                   clipPath: "inset(14%)",
                   transform: "scale(1.4)"
@@ -241,7 +241,7 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
               />
             </Link>
           </div>
-          <button 
+          <button
             onClick={() => setSidebarOpen(true)}
             className="p-2 bg-slate-50 text-slate-600 rounded-xl border border-slate-200"
           >
@@ -250,7 +250,7 @@ export default function POSLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-auto p-4 lg:p-8 print:p-0 print:overflow-visible print:block">
+        <div className="flex-1 overflow-auto p-2.5 sm:p-4 lg:p-8 print:p-0 print:overflow-visible print:block">
           <div className="max-w-7xl mx-auto print:max-w-none print:w-full">
             {children}
           </div>

@@ -1,19 +1,22 @@
 "use client";
 
 import * as React from "react";
-import { Menu, X, Globe, ChevronDown, Check, Star, Layers, MapPin, ShoppingCart, User } from "lucide-react";
+import { Menu, X, Globe, ChevronDown, Check, Star, Layers, MapPin, User, Home, Phone, Store, Share2, HelpCircle, Instagram, Facebook, Navigation } from "lucide-react";
 import { useLanguage, Language } from "@/context/LanguageContext";
 import { Button } from "./ui/button";
 import { useSession, signIn } from "next-auth/react";
 import { useSettings } from "@/hooks/useSettings";
+import { WheelMenu, WheelMenuItem } from "./WheelMenu";
+import { WhatsAppIcon } from "./WhatsAppIcon";
 
 /**
  * Navigation Bar Component
- * Mobile menu uses a radial/circular arc layout
+ * Mobile menu uses an infinite vertical wheel (see WheelMenu)
  */
 export function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isLangOpen, setIsLangOpen] = React.useState(false);
+  const [linkCopied, setLinkCopied] = React.useState(false);
   const { language, setLanguage, t } = useLanguage();
   const { settings } = useSettings();
   const { data: session } = useSession();
@@ -24,6 +27,17 @@ export function Navbar() {
       document.documentElement.classList.remove("pos-dark-mode");
     }
   }, []);
+
+  // Lock background scroll/interaction while the radial menu is open
+  React.useEffect(() => {
+    if (isOpen) {
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = previousOverflow;
+      };
+    }
+  }, [isOpen]);
 
   const navLinks = [
     { name: t("nav.favorites"), href: "#crowd-favorites", icon: Star },
@@ -38,49 +52,146 @@ export function Navbar() {
     { code: "en" as Language, label: "English" },
   ];
 
-  // All radial items: nav links + language + order
-  const radialItems = [
+  // Navigate to an in-page anchor or a full route, then close the menu
+  const goTo = (href: string) => {
+    setIsOpen(false);
+    setIsLangOpen(false);
+    if (href.startsWith("#")) {
+      document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+    } else if (href.startsWith("http")) {
+      window.open(href, "_blank");
+    } else {
+      window.location.href = href;
+    }
+  };
+
+  const handleShare = async () => {
+    setIsOpen(false);
+    const shareData = { title: "lmixi", url: window.location.origin };
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        // user cancelled the share sheet — no action needed
+      }
+    } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(shareData.url);
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
+      } catch {
+        // clipboard permission denied — nothing else we can do
+      }
+    }
+  };
+
+  // All wheel menu items: home + nav links + language + profile + call + order + store/faq/share/social
+  const wheelItems: WheelMenuItem[] = [
+    {
+      key: "home",
+      label: t("nav.home"),
+      icon: Home,
+      onSelect: () => goTo("#hero"),
+    },
     ...navLinks.map((link) => ({
-      type: "nav" as const,
+      key: link.href,
       label: link.name,
       icon: link.icon,
-      href: link.href,
+      onSelect: () => goTo(link.href),
     })),
     {
-      type: "lang" as const,
+      key: "store",
+      label: t("nav.store"),
+      icon: Store,
+      onSelect: () => goTo("/store"),
+    },
+    {
+      key: "faq",
+      label: t("nav.faq"),
+      icon: HelpCircle,
+      onSelect: () => goTo("#faq"),
+    },
+    {
+      key: "lang",
       label: languages.find((l) => l.code === language)?.label || "Language",
       icon: Globe,
-      href: undefined,
+      active: isLangOpen,
+      onSelect: () => setIsLangOpen((v) => !v),
     },
     {
-      type: "profile" as const,
+      key: "profile",
       label: session ? t("nav.profile") : t("nav.login"),
       icon: User,
-      href: session ? "/profile" : undefined,
+      avatarUrl: session?.user?.image || undefined,
+      onSelect: () => {
+        setIsOpen(false);
+        if (session) {
+          window.location.href = "/profile";
+        } else {
+          signIn("google");
+        }
+      },
     },
     {
-      type: "order" as const,
+      key: "call",
+      label: t("nav.call"),
+      icon: Phone,
+      onSelect: () => {
+        setIsOpen(false);
+        window.location.href = `tel:${settings.whatsappNumber.replace(/[^0-9+]/g, '')}`;
+      },
+    },
+    {
+      key: "share",
+      label: t("nav.share"),
+      icon: Share2,
+      onSelect: handleShare,
+    },
+    ...(settings.instagramUrl
+      ? [{
+          key: "instagram",
+          label: "Instagram",
+          icon: Instagram,
+          onSelect: () => goTo(settings.instagramUrl),
+        }]
+      : []),
+    ...(settings.facebookUrl
+      ? [{
+          key: "facebook",
+          label: "Facebook",
+          icon: Facebook,
+          onSelect: () => goTo(settings.facebookUrl),
+        }]
+      : []),
+    ...(settings.mapsUrl
+      ? [{
+          key: "maps",
+          label: t("nav.location"),
+          icon: Navigation,
+          onSelect: () => goTo(settings.mapsUrl),
+        }]
+      : []),
+    {
+      key: "order",
       label: t("nav.order"),
-      icon: ShoppingCart,
-      href: undefined,
+      icon: WhatsAppIcon,
+      onSelect: () => {
+        setIsOpen(false);
+        window.open("https://wa.me/905377903339", "_blank");
+      },
     },
   ];
 
-  // Calculate positions in a curved arc (centered on the right edge of the screen)
-  const getRadialPosition = (index: number, total: number) => {
-    // Arc spans from -85deg (top) to 85deg (bottom) to spread buttons further apart
-    const startAngle = -85;
-    const endAngle = 85;
-    const angleStep = (endAngle - startAngle) / (total - 1);
-    const angle = startAngle + angleStep * index;
-    const rad = (angle * Math.PI) / 180;
-    const radius = 175; // slightly increased distance from right edge for more breathing room
+  const findWheelItem = (key: string) => wheelItems.find((item) => item.key === key);
 
-    return {
-      x: -Math.cos(rad) * radius, // negative to go left from the right edge
-      y: Math.sin(rad) * radius,
-    };
-  };
+  // The handful of high-priority actions surfaced in the bottom tab bar (mobile)
+  const bottomNavItems = [
+    { key: "home", label: t("nav.home"), icon: Home, onSelect: () => findWheelItem("home")?.onSelect() },
+    { key: "#crowd-favorites", label: t("nav.favorites"), icon: Star, onSelect: () => findWheelItem("#crowd-favorites")?.onSelect() },
+    { key: "order", label: t("nav.order"), icon: WhatsAppIcon, onSelect: () => findWheelItem("order")?.onSelect() },
+    { key: "profile", label: session ? t("nav.profile") : t("nav.login"), icon: User, avatarUrl: session?.user?.image || undefined, onSelect: () => findWheelItem("profile")?.onSelect() },
+    { key: "menu", label: t("nav.menu"), icon: Menu, onSelect: () => setIsOpen(true) },
+  ];
 
   // Close radial menu when clicking outside
   React.useEffect(() => {
@@ -109,18 +220,83 @@ export function Navbar() {
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen]);
 
+  // Swipe up from the right screen edge opens the radial menu (mobile)
+  React.useEffect(() => {
+    const edgeWidth = 28;
+    const openThreshold = 40;
+    let startX: number | null = null;
+    let startY: number | null = null;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (touch.clientX > window.innerWidth - edgeWidth) {
+        startX = touch.clientX;
+        startY = touch.clientY;
+      } else {
+        startX = null;
+        startY = null;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (startY === null) return;
+      const touch = e.touches[0];
+      if (touch.clientY - startY < -openThreshold) {
+        setIsOpen(true);
+        startX = null;
+        startY = null;
+      }
+    };
+
+    const handleTouchEnd = () => {
+      startX = null;
+      startY = null;
+    };
+
+    document.addEventListener("touchstart", handleTouchStart, { passive: true });
+    document.addEventListener("touchmove", handleTouchMove, { passive: true });
+    document.addEventListener("touchend", handleTouchEnd);
+    return () => {
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, []);
+
   return (
     <>
-    <header className="sticky top-0 z-50 w-full border-b border-neon-border bg-neon-dark/10 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 w-full border-b border-black/10 bg-white/70 backdrop-blur-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
-        
+
+        {/* Mobile Radial Menu (Left Aligned) */}
+        <div className="md:hidden relative shrink-0" data-radial-menu>
+          {/* Menu Toggle Button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsOpen(!isOpen);
+              if (isOpen) setIsLangOpen(false);
+            }}
+            className={`relative z-[60] p-3 rounded-full transition-all duration-500 focus:outline-none ${
+              isOpen
+                ? "bg-black text-white rotate-90 scale-110"
+                : "text-gray-700 hover:text-black hover:bg-black/5"
+            }`}
+            aria-label="Toggle Menu"
+          >
+            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+
+          {/* Radial Menu Items moved outside header to fix fixed positioning container issues */}
+        </div>
+
         {/* Desktop Navigation Links & Custom Language Dropdown (Left Aligned) */}
         <nav className="hidden md:flex items-center gap-8 flex-1">
           {navLinks.map((link, idx) => (
             <a
               key={idx}
               href={link.href}
-              className="text-sm font-medium text-gray-300 hover:text-neon-green transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-neon-green hover:after:w-full after:transition-all"
+              className="text-sm font-medium text-gray-600 hover:text-black transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-px after:bg-black hover:after:w-full after:transition-all after:duration-300"
             >
               {link.name}
             </a>
@@ -128,17 +304,17 @@ export function Navbar() {
 
           {/* Profile / Login Desktop */}
           {session ? (
-            <a href="/profile" className="flex items-center gap-2 text-sm font-bold text-gray-300 hover:text-neon-green transition-colors">
+            <a href="/profile" className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black transition-colors">
               {session.user?.image ? (
-                <img src={session.user.image} alt="Profile" className="w-6 h-6 rounded-full border border-neon-green" />
+                <img src={session.user.image} alt="Profile" className="w-6 h-6 rounded-full border border-black/30" />
               ) : (
-                <User className="w-5 h-5 text-neon-green" />
+                <User className="w-5 h-5" />
               )}
               {t("nav.profile")}
             </a>
           ) : (
-            <button onClick={() => signIn("google")} className="flex items-center gap-2 text-sm font-bold text-gray-300 hover:text-neon-green transition-colors">
-              <User className="w-5 h-5 text-neon-green" />
+            <button onClick={() => signIn("google")} className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black transition-colors">
+              <User className="w-5 h-5" />
               {t("nav.login")}
             </button>
           )}
@@ -147,7 +323,7 @@ export function Navbar() {
           <div className="relative">
             <button
               onClick={() => setIsLangOpen(!isLangOpen)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-neon-green/40 bg-neon-green/5 hover:bg-neon-green/15 text-neon-green font-bold text-sm transition-all shadow-[0_0_15px_rgba(255,103,0,0.15)] focus:outline-none"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-black/15 bg-black/[0.03] hover:bg-black/[0.08] text-black font-medium text-sm transition-all duration-300 focus:outline-none"
             >
               <Globe className="w-4 h-4" />
               <span>{languages.find(l => l.code === language)?.label}</span>
@@ -156,28 +332,28 @@ export function Navbar() {
 
             {/* Floating Glass Popup */}
             {isLangOpen && (
-              <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.5)] p-2 space-y-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+              <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white/95 backdrop-blur-xl border border-black/10 shadow-[0_8px_30px_rgba(0,0,0,0.15)] p-2 space-y-1 z-50 animate-in fade-in zoom-in-95 duration-200">
                 {languages.map((lang) => (
                   <button
                     key={lang.code}
                     onClick={() => {
                       setLanguage(lang.code);
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                       language === lang.code
-                        ? "bg-white text-black shadow-lg scale-105"
-                        : "text-white hover:bg-white/10"
+                        ? "bg-black text-white"
+                        : "text-black hover:bg-black/5"
                     }`}
                   >
                     <span>{lang.label}</span>
                     {language === lang.code && <Check className="w-4 h-4" />}
                   </button>
                 ))}
-                
+
                 {/* OK Button */}
                 <button
                   onClick={() => setIsLangOpen(false)}
-                  className="mt-2 w-full bg-neon-green text-black font-black py-2 rounded-xl text-sm hover:bg-[#4bc122] transition-colors shadow-[0_0_15px_rgba(57,255,20,0.3)]"
+                  className="mt-2 w-full bg-black text-white font-semibold py-2 rounded-lg text-sm hover:bg-gray-800 transition-colors"
                 >
                   {t("common.ok")}
                 </button>
@@ -186,28 +362,24 @@ export function Navbar() {
           </div>
         </nav>
 
-        {/* Center Logo Area */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex justify-center w-auto">
-          <a href="#hero" className="block group">
-            {/* SVG Filter to remove white background and colorize black text to #39ff14 (Neon Green) */}
-            <svg width="0" height="0" className="absolute hidden">
-              <filter id="green-logo-filter">
-                <feColorMatrix
-                  type="matrix"
-                  values="
-                    0 0 0 0 0.2235
-                    0 0 0 0 1
-                    0 0 0 0 0.0784
-                    -1 -1 -1 0 2.5
-                  "
-                />
-              </filter>
-            </svg>
-            <img 
-              src="/sultan.logo.jpg" 
-              alt="Sultan Logo" 
-              className="h-40 w-auto object-contain drop-shadow-[0_0_15px_rgba(57,255,20,0.5)] transition-all duration-300 group-hover:drop-shadow-[0_0_25px_rgba(57,255,20,0.8)] group-hover:scale-105"
-              style={{ filter: "url(#green-logo-filter)", clipPath: "inset(3px)" }}
+        {/* Action Button & Logo (Right Aligned) */}
+        <div className="flex items-center gap-4 justify-end flex-1">
+          <div className="hidden md:flex items-center">
+            <Button
+              size="sm"
+              className="bg-black text-white hover:bg-gray-800"
+              onClick={() => window.open(`https://wa.me/${settings.whatsappNumber.replace(/[^0-9]/g, '')}`, "_blank")}
+            >
+              {t("nav.order")}
+            </Button>
+          </div>
+
+          {/* Logo */}
+          <a href="#hero" className="flex items-center group shrink-0">
+            <img
+              src="/lmixi-logo-icon.png"
+              alt="lmixi"
+              className="h-8 sm:h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-105"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
                 if (e.currentTarget.nextElementSibling) {
@@ -217,193 +389,88 @@ export function Navbar() {
               }}
             />
             {/* Fallback Text Logo (hidden by default unless image fails to load) */}
-            <span className="hidden text-3xl font-black text-neon-green drop-shadow-[0_0_10px_rgba(57,255,20,0.35)] items-center gap-2.5 transition-all duration-300 group-hover:drop-shadow-[0_0_16px_rgba(57,255,20,0.6)]">
-              <span className="text-neon-green/80 text-2xl select-none animate-pulse">❖</span>
-              <span className="tracking-[0.25em] font-extrabold">SULTAN</span>
-              <span className="text-neon-green/80 text-2xl select-none animate-pulse">❖</span>
+            <span className="hidden text-xl font-bold text-black items-center gap-2.5 transition-all duration-300">
+              <span className="tracking-[0.05em] font-semibold">lmixi</span>
             </span>
           </a>
-        </div>
-
-        {/* Action Button & Mobile Menu (Right Aligned) */}
-        <div className="flex items-center gap-4 justify-end flex-1">
-          <div className="hidden md:flex items-center">
-            <Button variant="neon" size="sm" onClick={() => window.open(`https://wa.me/${settings.whatsappNumber.replace(/[^0-9]/g, '')}`, "_blank")}>
-              {t("nav.order")}
-            </Button>
-          </div>
-
-          {/* Mobile Radial Menu */}
-          <div className="md:hidden relative" data-radial-menu>
-            {/* Menu Toggle Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsOpen(!isOpen);
-                if (isOpen) setIsLangOpen(false);
-              }}
-              className={`relative z-[60] p-3 rounded-full transition-all duration-500 focus:outline-none ${
-                isOpen
-                  ? "bg-neon-green text-neon-dark shadow-[0_0_30px_rgba(255,103,0,0.6)] rotate-90 scale-110"
-                  : "text-gray-300 hover:text-neon-green hover:bg-white/5"
-              }`}
-              aria-label="Toggle Menu"
-            >
-              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-
-            {/* Radial Menu Items moved outside header to fix fixed positioning container issues */}
-          </div>
         </div>
       </div>
     </header>
 
-    {/* Mobile Radial Menu Items and Overlay (Rendered outside the header to ensure true fixed positioning relative to viewport) */}
+    {/* Bottom Navigation Bar (mobile) — quick access to the most important actions */}
+    <nav
+      className={`md:hidden fixed bottom-0 inset-x-0 z-50 h-16 bg-white/90 backdrop-blur-xl border-t border-black/10 flex items-stretch transition-transform duration-300 ${
+        isOpen ? "translate-y-full" : "translate-y-0"
+      }`}
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
+      {bottomNavItems.map((item) => {
+        const Icon = item.icon;
+        if (item.key === "order") {
+          return (
+            <button
+              key={item.key}
+              onClick={item.onSelect}
+              className="flex flex-col items-center justify-center gap-1 flex-1"
+            >
+              <span className="w-11 h-11 -mt-6 rounded-full bg-black text-white flex items-center justify-center shadow-lg shadow-black/30 border-4 border-white">
+                <Icon className="w-5 h-5" />
+              </span>
+              <span className="text-[10px] font-medium text-black/60">{item.label}</span>
+            </button>
+          );
+        }
+        return (
+          <button
+            key={item.key}
+            onClick={item.onSelect}
+            className="flex flex-col items-center justify-center gap-1 flex-1 text-black/60 hover:text-black transition-colors"
+          >
+            <span className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center">
+              {item.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.avatarUrl} alt="" className="w-full h-full object-cover rounded-full" />
+              ) : (
+                <Icon className="w-5 h-5" />
+              )}
+            </span>
+            <span className="text-[10px] font-medium">{item.label}</span>
+          </button>
+        );
+      })}
+    </nav>
+
+    {/* Edge swipe handle hint (mobile only, hidden while menu is open) */}
+    <div
+      className={`md:hidden fixed right-0 top-1/2 -translate-y-1/2 z-[53] w-1.5 h-20 rounded-l-full bg-black/15 transition-opacity duration-300 ${
+        isOpen ? "opacity-0" : "opacity-100"
+      }`}
+      aria-hidden="true"
+    />
+
+    {/* Ultra-premium infinite wheel menu (mobile) */}
     <div className="md:hidden" data-radial-menu>
-      {/* Overlay backdrop */}
-      <div
-        className={`fixed inset-0 bg-neon-dark/70 backdrop-blur-md z-40 transition-opacity duration-300 ${isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
-        onClick={() => {
+      <WheelMenu
+        items={wheelItems}
+        isOpen={isOpen && !isLangOpen}
+        onClose={() => {
           setIsOpen(false);
           setIsLangOpen(false);
         }}
       />
 
-      {/* Decorative curved path SVG behind radial items */}
-      <svg
-        className={`fixed z-[54] pointer-events-none transition-opacity duration-300 ${isOpen ? "opacity-100" : "opacity-0"}`}
-        style={{
-          top: "50%",
-          right: 0,
-          transform: "translateY(-50%)",
-          width: "250px",
-          height: "500px",
-        }}
+      {/* Link-copied confirmation toast (share fallback) */}
+      <div
+        className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[80] px-4 py-2 rounded-full bg-black text-white text-sm font-medium shadow-xl transition-all duration-300 ${
+          linkCopied ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"
+        }`}
       >
-        <path
-          d={`M 250 50 Q 50 250, 250 450`}
-          fill="none"
-          stroke="rgba(255, 103, 0, 0.12)"
-          strokeWidth="2"
-          strokeDasharray="6 4"
-          className="animate-pulse"
-        />
-      </svg>
-
-      {/* Radial Menu Items */}
-      {radialItems.map((item, idx) => {
-        const pos = getRadialPosition(idx, radialItems.length);
-        const delay = idx * 60;
-        const Icon = item.icon;
-
-        return (
-          <div
-            key={idx}
-            className="fixed top-1/2 right-0 z-[55]"
-            style={{
-              transform: isOpen && !isLangOpen
-                ? `translate(calc(-30px + ${pos.x}px), calc(-50% + ${pos.y}px)) scale(1)`
-                : `translate(100%, -50%) scale(0)`,
-              opacity: isOpen && !isLangOpen ? 1 : 0,
-              transition: `all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55) ${delay}ms`,
-              pointerEvents: isOpen && !isLangOpen ? "auto" : "none",
-            }}
-          >
-            {/* Language item - shows sub-options on click */}
-            {item.type === "lang" ? (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsLangOpen(!isLangOpen);
-                  }}
-                  className={`group flex flex-col items-center gap-1.5 transition-all duration-300`}
-                >
-                  <div
-                    className={`w-14 h-14 rounded-full flex items-center justify-center backdrop-blur-xl border-2 transition-all duration-300 shadow-lg hover:scale-110 ${
-                      isLangOpen
-                        ? "bg-neon-green text-neon-dark border-neon-green shadow-[0_0_25px_rgba(255,103,0,0.5)]"
-                        : "bg-neon-dark/80 text-neon-green border-neon-green/40 hover:border-neon-green hover:shadow-[0_0_20px_rgba(255,103,0,0.3)]"
-                    }`}
-                  >
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <span className="text-[11px] font-bold text-gray-300 whitespace-nowrap max-w-[80px] truncate">
-                    {item.label}
-                  </span>
-                </button>
-
-                  {/* Note: The sub-menu orbiting logic was removed. 
-                      Instead, a centralized green pill menu handles language selection when isLangOpen is true. */}
-              </div>
-            ) : item.type === "order" ? (
-              /* Order button */
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  window.open("https://wa.me/905377903339", "_blank");
-                }}
-                className="group flex flex-col items-center gap-1.5"
-              >
-                <div className="w-14 h-14 rounded-full flex items-center justify-center bg-neon-green text-neon-dark border-2 border-neon-green shadow-[0_0_25px_rgba(255,103,0,0.5)] hover:shadow-[0_0_35px_rgba(255,103,0,0.7)] transition-all duration-300 hover:scale-110 animate-pulse">
-                  <Icon className="w-6 h-6" />
-                </div>
-                <span className="text-[11px] font-bold text-neon-green whitespace-nowrap max-w-[80px] truncate">
-                  {item.label}
-                </span>
-              </button>
-            ) : item.type === "profile" ? (
-              /* Profile / Login button */
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIsOpen(false);
-                  if (session) {
-                    window.location.href = "/profile";
-                  } else {
-                    signIn("google");
-                  }
-                }}
-                className="group flex flex-col items-center gap-1.5"
-              >
-                <div className="w-14 h-14 rounded-full flex items-center justify-center bg-neon-dark/80 text-neon-green border-2 border-neon-green/40 hover:border-neon-green hover:shadow-[0_0_20px_rgba(255,103,0,0.3)] backdrop-blur-xl shadow-lg transition-all duration-300 hover:scale-110 overflow-hidden">
-                  {session && session.user?.image ? (
-                    <img src={session.user.image} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <Icon className="w-6 h-6" />
-                  )}
-                </div>
-                <span className="text-[11px] font-bold text-gray-300 group-hover:text-neon-green whitespace-nowrap max-w-[80px] truncate transition-colors">
-                  {item.label}
-                </span>
-              </button>
-            ) : (
-              /* Regular nav items */
-              <a
-                href={item.href}
-                onClick={() => {
-                  setIsOpen(false);
-                  setIsLangOpen(false);
-                }}
-                className="group flex flex-col items-center gap-1.5"
-              >
-                <div className="w-14 h-14 rounded-full flex items-center justify-center bg-neon-dark/80 text-neon-green border-2 border-neon-green/40 hover:border-neon-green hover:shadow-[0_0_20px_rgba(255,103,0,0.3)] backdrop-blur-xl shadow-lg transition-all duration-300 hover:scale-110">
-                  <Icon className="w-6 h-6" />
-                </div>
-                <span className="text-[11px] font-bold text-gray-300 group-hover:text-neon-green whitespace-nowrap max-w-[80px] truncate transition-colors">
-                  {item.label}
-                </span>
-              </a>
-            )}
-          </div>
-        );
-      })}
+        {t("nav.linkCopied")}
+      </div>
 
       {/* Expanded Language Menu (Glassmorphism Frame) */}
       <div
-        className="fixed bottom-0 left-0 w-full z-[70] flex flex-col gap-2 p-6 rounded-t-3xl bg-black/60 backdrop-blur-3xl border-t border-white/10 shadow-[0_-20px_40px_rgba(0,0,0,0.5)]"
+        className="fixed bottom-0 left-0 w-full z-[70] flex flex-col gap-2 p-6 rounded-t-3xl bg-white/95 backdrop-blur-3xl border-t border-black/10 shadow-[0_-20px_40px_rgba(0,0,0,0.15)]"
         style={{
           transform: (isOpen && isLangOpen) ? "translateY(0%)" : "translateY(100%)",
           opacity: (isOpen && isLangOpen) ? 1 : 0,
@@ -411,28 +478,28 @@ export function Navbar() {
           pointerEvents: (isOpen && isLangOpen) ? "auto" : "none",
         }}
       >
-        <div className="flex items-center justify-between px-3 pt-1 pb-2 border-b border-white/10 mb-1">
-          <span className="text-white font-extrabold text-sm flex items-center gap-2">
-            <Globe className="w-5 h-5 text-neon-green" /> Language
+        <div className="flex items-center justify-between px-3 pt-1 pb-2 border-b border-black/10 mb-1">
+          <span className="text-black font-semibold text-sm flex items-center gap-2">
+            <Globe className="w-5 h-5" /> Language
           </span>
-          <button 
-            onClick={() => setIsLangOpen(false)} 
-            className="text-white/60 hover:text-white hover:scale-110 transition-transform bg-white/5 hover:bg-white/10 rounded-full p-1"
+          <button
+            onClick={() => setIsLangOpen(false)}
+            className="text-black/60 hover:text-black hover:scale-110 transition-transform bg-black/5 hover:bg-black/10 rounded-full p-1"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
-        
+
         {languages.map((lang) => (
           <button
             key={lang.code}
             onClick={() => {
               setLanguage(lang.code);
             }}
-            className={`flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+            className={`flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${
               language === lang.code
-                ? "bg-white text-black shadow-lg scale-105"
-                : "text-white hover:bg-white/10"
+                ? "bg-black text-white"
+                : "text-black hover:bg-black/5"
             }`}
           >
             <span>{lang.label}</span>
@@ -446,7 +513,7 @@ export function Navbar() {
             setIsLangOpen(false);
             setIsOpen(false);
           }}
-          className="mt-1 w-full bg-neon-green text-black font-black py-2 rounded-xl text-sm hover:bg-[#4bc122] transition-colors shadow-[0_0_15px_rgba(57,255,20,0.3)]"
+          className="mt-1 w-full bg-black text-white font-semibold py-2 rounded-lg text-sm hover:bg-gray-800 transition-colors"
         >
           {t("common.ok")}
         </button>

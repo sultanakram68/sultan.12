@@ -38,7 +38,7 @@ export function ScrollSections({ scrollYProgress }: ScrollSectionsProps) {
         className="absolute top-[25%] left-0 w-full text-center px-4"
         dir={dir}
       >
-        <h1 className="text-4xl md:text-6xl font-bold tracking-tight drop-shadow-2xl mb-4 text-[#5dd62c]" style={{ lineHeight: "1.4" }}>
+        <h1 className="text-4xl md:text-6xl font-bold tracking-tight drop-shadow-2xl mb-4 text-white" style={{ lineHeight: "1.4" }}>
           {t("scroll.scene1")}
         </h1>
       </motion.div>
@@ -49,7 +49,7 @@ export function ScrollSections({ scrollYProgress }: ScrollSectionsProps) {
         className={`absolute top-[30%] md:top-[40%] px-4 max-w-sm ${language === "ar" ? "right-[5%] md:right-[10%] text-right" : "left-[5%] md:left-[10%] text-left"}`}
         dir={dir}
       >
-        <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4 text-[#5dd62c]" style={{ lineHeight: "1.3" }}>
+        <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4 text-white" style={{ lineHeight: "1.3" }}>
           {t("scroll.scene2")}
         </h2>
       </motion.div>
@@ -60,7 +60,7 @@ export function ScrollSections({ scrollYProgress }: ScrollSectionsProps) {
         className={`absolute top-[30%] md:top-[40%] px-4 max-w-sm ${language === "ar" ? "left-[5%] md:left-[10%] text-left" : "right-[5%] md:right-[10%] text-right"}`}
         dir={dir}
       >
-        <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4 text-[#5dd62c]" style={{ lineHeight: "1.3" }}>
+        <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4 text-white" style={{ lineHeight: "1.3" }}>
           {t("scroll.scene3")}
         </h2>
       </motion.div>
@@ -71,10 +71,10 @@ export function ScrollSections({ scrollYProgress }: ScrollSectionsProps) {
         className="absolute bottom-[15%] left-0 w-full text-center px-4"
         dir={dir}
       >
-        <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-[#5dd62c]" style={{ lineHeight: "1.4" }}>
+        <h2 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-white" style={{ lineHeight: "1.4" }}>
           {t("scroll.scene4")}
         </h2>
-        <button className="pointer-events-auto bg-[#5dd62c] text-black px-8 py-3 rounded-full font-bold text-lg hover:bg-[#4bc122] transition-colors">
+        <button className="pointer-events-auto bg-white text-black px-8 py-3 rounded-full font-bold text-lg hover:bg-gray-200 transition-colors">
           {t("scroll.browse")}
         </button>
       </motion.div>

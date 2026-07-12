@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
-import { Save, CheckCircle2, AlertTriangle, Phone, Type, Plus, X, Settings2 } from "lucide-react";
+import { Save, CheckCircle2, AlertTriangle, Phone, Type, Plus, X, Settings2, Instagram, Facebook, MapPin } from "lucide-react";
 
 export default function MediaAdmin() {
   const [loading, setLoading] = useState(true);
@@ -18,6 +18,9 @@ export default function MediaAdmin() {
     "خصم 50% على الإكسسوارات والسماعات الأصلية",
     "صيانة فورية خلال 30 دقيقة فقط"
   ]);
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [facebookUrl, setFacebookUrl] = useState("");
+  const [mapsUrl, setMapsUrl] = useState("");
 
   // Toast State
   const [toast, setToast] = useState<{show: boolean, message: string, type: 'success' | 'error'}>({show: false, message: '', type: 'success'});
@@ -37,6 +40,9 @@ export default function MediaAdmin() {
           const data = docSnap.data();
           if (data.whatsappNumber) setWhatsapp(data.whatsappNumber);
           if (data.marqueeTexts && Array.isArray(data.marqueeTexts)) setMarquee(data.marqueeTexts);
+          if (data.instagramUrl) setInstagramUrl(data.instagramUrl);
+          if (data.facebookUrl) setFacebookUrl(data.facebookUrl);
+          if (data.mapsUrl) setMapsUrl(data.mapsUrl);
         }
       } catch (error) {
         console.error("Error fetching settings", error);
@@ -56,7 +62,10 @@ export default function MediaAdmin() {
     try {
       await setDoc(doc(db, "settings", "general"), {
         whatsappNumber: whatsapp,
-        marqueeTexts: marquee.filter(text => text.trim() !== "")
+        marqueeTexts: marquee.filter(text => text.trim() !== ""),
+        instagramUrl: instagramUrl.trim(),
+        facebookUrl: facebookUrl.trim(),
+        mapsUrl: mapsUrl.trim()
       }, { merge: true });
       
       showToast("تم حفظ الإعدادات بنجاح!");
@@ -213,6 +222,68 @@ export default function MediaAdmin() {
                   <p className="text-zinc-500 text-sm">لا يوجد نصوص حالياً. انقر على إضافة نص للبدء.</p>
                 </div>
               )}
+            </div>
+          </motion.div>
+
+          {/* Social & Location Links */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="lg:col-span-3 bg-zinc-900/80 border border-zinc-800/80 rounded-xl p-5"
+          >
+            <div className="flex items-center gap-3 mb-5 border-b border-zinc-800/50 pb-4">
+              <div className="w-8 h-8 rounded-md bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-300 shadow-sm">
+                <MapPin size={16} />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-zinc-200">روابط التواصل والموقع</h2>
+                <p className="text-[11px] text-zinc-500">تظهر هذه الروابط في قائمة الموقع (اتركها فارغة لإخفائها)</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-zinc-400">
+                  <Instagram size={13} /> إنستغرام
+                </label>
+                <input
+                  type="text"
+                  value={instagramUrl}
+                  onChange={(e) => setInstagramUrl(e.target.value)}
+                  dir="ltr"
+                  placeholder="https://instagram.com/..."
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2.5 text-zinc-200 text-sm focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 transition-colors shadow-inner"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-zinc-400">
+                  <Facebook size={13} /> فيسبوك
+                </label>
+                <input
+                  type="text"
+                  value={facebookUrl}
+                  onChange={(e) => setFacebookUrl(e.target.value)}
+                  dir="ltr"
+                  placeholder="https://facebook.com/..."
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2.5 text-zinc-200 text-sm focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 transition-colors shadow-inner"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-1.5 text-xs font-semibold text-zinc-400">
+                  <MapPin size={13} /> موقع المحل (Google Maps)
+                </label>
+                <input
+                  type="text"
+                  value={mapsUrl}
+                  onChange={(e) => setMapsUrl(e.target.value)}
+                  dir="ltr"
+                  placeholder="https://maps.app.goo.gl/..."
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-md p-2.5 text-zinc-200 text-sm focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 transition-colors shadow-inner"
+                />
+              </div>
             </div>
           </motion.div>
 

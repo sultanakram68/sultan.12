@@ -34,7 +34,7 @@ export default function POSCashierCorporate() {
     try { navigator.vibrate && navigator.vibrate([300, 100, 300]); } catch (err) {}
     unregisteredTimerRef.current = setTimeout(() => {
       setUnregisteredBarcode(null);
-    }, 2000);
+    }, 5000);
   };
 
   // Keyboard Shortcuts & Global Hardware Barcode Scanner (USB/Bluetooth) Detection - Full Focus & Speed
@@ -256,13 +256,7 @@ export default function POSCashierCorporate() {
       const startWithConfig = (config: any) => {
         html5Qrcode.start(
           config,
-          { 
-            fps: 30, 
-            qrbox: { width: 280, height: 280 }, 
-            aspectRatio: 1.0,
-            experimentalFeatures: { useBarCodeDetectorIfSupported: true },
-            disableFlip: false
-          },
+          { fps: 15, qrbox: { width: 250, height: 250 } },
           (text: string) => {
             if (!text || text.trim().length < 3) return;
             const cleanText = text.trim();
@@ -403,7 +397,7 @@ export default function POSCashierCorporate() {
             </div>
           )}
 
-          <div className={`bg-white border rounded-2xl p-4 shadow-sm relative flex flex-col md:flex-row gap-4 transition-all duration-300 ${unregisteredBarcode ? 'border-red-500 ring-4 ring-red-500/30 bg-red-50/20' : 'border-slate-200'}`}>
+          <div className={`bg-white border rounded-2xl p-3 sm:p-4 shadow-sm relative flex flex-col md:flex-row gap-3 sm:gap-4 transition-all duration-300 ${unregisteredBarcode ? 'border-red-500 ring-4 ring-red-500/30 bg-red-50/20' : 'border-slate-200'}`}>
           
           <div className="flex bg-slate-50 p-1.5 rounded-xl border border-slate-200 shrink-0 justify-between gap-1">
             {isLaserEnabled && (
@@ -418,8 +412,8 @@ export default function POSCashierCorporate() {
 
           <div className="flex-1 relative w-full group">
             <input
-              ref={searchInputRef} type="text" placeholder="امسح الرمز أو ابحث يدوياً (التركيز تلقائي)..."
-              className="w-full bg-slate-50 border border-slate-200 focus:border-[#1E3A8A] focus:bg-white focus:ring-4 focus:ring-[#1E3A8A]/10 rounded-xl py-3.5 pr-12 pl-12 text-[#0F172A] text-lg transition-all outline-none"
+              ref={searchInputRef} type="text" placeholder="امسح الرمز أو ابحث يدوياً..."
+              className="w-full bg-slate-50 border border-slate-200 focus:border-[#1E3A8A] focus:bg-white focus:ring-4 focus:ring-[#1E3A8A]/10 rounded-xl py-3 sm:py-3.5 pr-11 sm:pr-12 pl-11 sm:pl-12 text-[#0F172A] text-base sm:text-lg transition-all outline-none"
               value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && filteredProducts.length >= 1) { addToCart(filteredProducts[0]); setSearchQuery(""); } }}
             />
@@ -497,13 +491,13 @@ export default function POSCashierCorporate() {
         </div>
 
         {isCameraOpen && (
-          <div className="bg-white p-6 border border-slate-200 relative z-10 w-full flex flex-col items-center justify-center print:hidden mb-4 rounded-2xl shadow-sm">
-            <div className="flex justify-between items-center w-full max-w-sm mb-4 text-[#0F172A]">
+          <div className="bg-white p-4 border border-slate-200 rounded-2xl relative z-10 w-full flex flex-col items-center justify-center print:hidden mb-4 shadow-sm">
+            <div className="flex justify-between items-center w-full max-w-sm mb-3 text-[#0F172A]">
               <span className="font-bold text-sm flex items-center gap-2">
                 <Barcode size={18} className="text-[#1E3A8A]" />
-                قارئ الباركود (يضيف المنتج لسلة العميل مباشرة من المخزون)
+                قارئ الباركود
               </span>
-              <button onClick={toggleCamera} className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors">
+              <button onClick={toggleCamera} className="p-1 text-slate-400 hover:text-slate-600 rounded transition-colors">
                 <X size={18} />
               </button>
             </div>
@@ -515,24 +509,23 @@ export default function POSCashierCorporate() {
                 </button>
               </div>
             )}
-            <div id="reader" className="w-full max-w-sm rounded-2xl overflow-hidden border border-slate-600 bg-black min-h-[250px] [&_video]:scale-[1.5] [&_video]:origin-center" />
-            <p className="text-xs text-slate-400 mt-3 text-center font-semibold">بمجرد توجيه الكاميرا للباركود سيتم إضافته لسلة المشتريات فوراً</p>
+            <div id="reader" className="w-full max-w-sm rounded-xl overflow-hidden border border-slate-200 bg-black min-h-[250px]" />
           </div>
         )}
 
         {/* نسخة الإجمالي الصافي (فوق إطار المنتجات مباشرة) */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 lg:p-5 mb-4 shadow-sm flex items-center justify-between print:hidden transition-all">
-          <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-2xl border border-slate-200 text-[#1E3A8A]">
+        <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 lg:p-5 mb-4 shadow-sm flex items-center justify-between print:hidden transition-all">
+          <div className="flex items-center gap-2.5 sm:gap-3.5">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-xl sm:text-2xl border border-slate-200 text-[#1E3A8A]">
               💰
             </div>
             <div>
-              <h3 className="text-base lg:text-lg font-black text-[#0F172A] tracking-tight">الإجمالي الصافي</h3>
-              <p className="text-xs text-slate-400 font-medium">يتم التحديث تلقائياً مع قراءة الأكواد وإضافة المنتجات</p>
+              <h3 className="text-sm sm:text-base lg:text-lg font-black text-[#0F172A] tracking-tight">الإجمالي الصافي</h3>
+              <p className="text-[10px] sm:text-xs text-slate-400 font-medium hidden sm:block">يتم التحديث تلقائياً مع قراءة الأكواد</p>
             </div>
           </div>
-          <div className="text-left bg-slate-50 px-5 py-2 rounded-xl border border-slate-200">
-            <span className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-[#1E3A8A] font-mono">₺{total.toFixed(2)}</span>
+          <div className="text-left bg-slate-50 px-3 sm:px-5 py-1.5 sm:py-2 rounded-xl border border-slate-200">
+            <span className="text-xl sm:text-2xl lg:text-4xl font-black tracking-tight text-[#1E3A8A] font-mono">₺{total.toFixed(2)}</span>
           </div>
         </div>
 
@@ -540,11 +533,12 @@ export default function POSCashierCorporate() {
         <div className="flex flex-col gap-4 flex-1 relative z-10 p-2 lg:p-0">
           
           {/* Cart List - Compact & Auto-extending frame */}
-          <div className="w-full bg-white lg:border border-slate-200 rounded-2xl overflow-hidden shadow-sm h-auto min-h-[160px] transition-all duration-300 flex flex-col">
-            <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between print:hidden">
-              <h2 className="text-lg font-bold text-[#0F172A] flex items-center gap-2">
-                <span>تفاصيل الفاتورة والمنتجات المقروءة</span>
-                <span className="bg-[#1E3A8A]/10 text-[#1E3A8A] text-xs font-black px-2.5 py-0.5 rounded-full">{cart.reduce((s, i) => s + i.qty, 0)} عنصر</span>
+          <div className="w-full bg-white lg:border border-slate-200 rounded-2xl overflow-hidden shadow-sm h-auto min-h-[140px] sm:min-h-[160px] transition-all duration-300 flex flex-col">
+            <div className="bg-slate-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-200 flex items-center justify-between print:hidden">
+              <h2 className="text-base sm:text-lg font-bold text-[#0F172A] flex items-center gap-2">
+                <span className="hidden sm:inline">تفاصيل الفاتورة والمنتجات المقروءة</span>
+                <span className="sm:hidden">الفاتورة</span>
+                <span className="bg-[#1E3A8A]/10 text-[#1E3A8A] text-xs font-black px-2 sm:px-2.5 py-0.5 rounded-full">{cart.reduce((s, i) => s + i.qty, 0)} عنصر</span>
               </h2>
               <button onClick={() => { setCart([]); setDiscount(""); setPaidAmount(""); }} className="text-sm font-semibold text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-transparent hover:border-red-100">
                 <Trash2 size={16} /> تفريغ السلة
@@ -556,7 +550,7 @@ export default function POSCashierCorporate() {
               <p className="text-gray-500 text-sm">التاريخ: {new Date().toLocaleDateString()}</p>
             </div>
 
-            <div className="p-3 lg:p-4 space-y-2">
+            <div className="p-2.5 sm:p-3 lg:p-4 space-y-2">
               {cart.length === 0 ? (
                 <div className="py-12 flex flex-col items-center justify-center text-slate-400 print:hidden">
                   <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-3"><Barcode className="opacity-30" size={28} /></div>
@@ -604,7 +598,7 @@ export default function POSCashierCorporate() {
           {/* Payment & Summary Panel - Placed directly below cart list (NOT fixed at bottom) */}
           <div className="w-full flex flex-col bg-white lg:border border-slate-200 rounded-2xl shadow-sm z-30 transition-all duration-300 mt-2 print:hidden">
             
-            <div className="p-5 lg:p-6 space-y-4">
+            <div className="p-3 sm:p-5 lg:p-6 space-y-3 sm:space-y-4">
               
               <div className="space-y-3 mb-2 border-b border-slate-100 pb-4">
                 <div className="flex justify-between text-sm text-slate-500 font-medium"><span>المجموع الفرعي:</span><span className="text-[#0F172A]">₺{subtotal.toFixed(2)}</span></div>
@@ -615,26 +609,26 @@ export default function POSCashierCorporate() {
               </div>
 
               <div className="flex justify-between items-center pt-2">
-                <span className="text-lg font-bold text-[#0F172A]">الإجمالي الصافي</span>
-                <span className="text-3xl lg:text-4xl font-black text-[#1E3A8A]">₺{total.toFixed(2)}</span>
+                <span className="text-base sm:text-lg font-bold text-[#0F172A]">الإجمالي الصافي</span>
+                <span className="text-2xl sm:text-3xl lg:text-4xl font-black text-[#1E3A8A]">₺{total.toFixed(2)}</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-100">
-                <button onClick={() => handleCheckout("card")} disabled={cart.length===0} className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50">
-                  <CreditCard size={20} /> بطاقة
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-slate-100">
+                <button onClick={() => handleCheckout("card")} disabled={cart.length===0} className="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 sm:py-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 text-sm sm:text-base">
+                  <CreditCard size={18} /> بطاقة
                 </button>
-                <button onClick={() => handleCheckout("cash")} disabled={cart.length===0} className="bg-[#1E3A8A] hover:bg-[#152960] text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-[#1E3A8A]/20">
-                  <Banknote size={20} /> كاش
+                <button onClick={() => handleCheckout("cash")} disabled={cart.length===0} className="bg-[#1E3A8A] hover:bg-[#152960] text-white font-bold py-3.5 sm:py-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-md shadow-[#1E3A8A]/20 text-sm sm:text-base">
+                  <Banknote size={18} /> كاش
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <button onClick={() => window.print()} disabled={cart.length===0} className="bg-white border border-slate-200 hover:bg-slate-50 text-[#0F172A] font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50">
-                  <Printer size={18} /> طباعة
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 pt-2">
+                <button onClick={() => window.print()} disabled={cart.length===0} className="bg-white border border-slate-200 hover:bg-slate-50 text-[#0F172A] font-bold py-2.5 sm:py-3 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 text-sm">
+                  <Printer size={16} /> طباعة
                 </button>
-                <button onClick={handleWhatsApp} disabled={cart.length===0} className="bg-[#25D366] hover:bg-[#1EBE5A] text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50">
-                  <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="css-i6dzq1"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                  إرسال واتساب
+                <button onClick={handleWhatsApp} disabled={cart.length===0} className="bg-[#25D366] hover:bg-[#1EBE5A] text-white font-bold py-2.5 sm:py-3 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 text-sm">
+                  <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="css-i6dzq1"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                  واتساب
                 </button>
               </div>
             </div>

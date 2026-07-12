@@ -32,7 +32,7 @@ export function ContactUs() {
     } catch (err) {
       console.error("Error saving message:", err);
     }
-    
+
     // إرسال الرسالة مباشرة إلى واتساب صاحب المتجر
     const phone = settings.whatsappNumber || "905377903339";
     const text = `رسالة جديدة من الموقع:\nالاسم: ${name}\nالبريد: ${email}\nالرسالة: ${message}`;
@@ -46,107 +46,107 @@ export function ContactUs() {
   };
 
   return (
-    <section id="contact-us" className="py-20 bg-neon-dark relative scroll-mt-20">
+    <section id="contact-us" className="py-20 bg-white relative scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          
+
           {/* Info Side */}
           <div>
-            <div className="inline-flex items-center gap-2 text-neon-green text-xs font-extrabold uppercase tracking-widest px-3 py-1 rounded-full border border-neon-green/30 bg-neon-green/5 mb-4">
+            <div className="inline-flex items-center gap-2 text-black/60 text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded-full border border-black/20 bg-black/[0.03] mb-4">
               {t("contact.badge")}
             </div>
-            <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight mb-6">
+            <h2 className="text-3xl sm:text-5xl font-bold text-black tracking-tight mb-6">
               {t("contact.title")}
             </h2>
-            <p className="text-gray-400 text-base sm:text-lg mb-8 leading-relaxed">
+            <p className="text-gray-600 text-base sm:text-lg mb-8 leading-relaxed">
               {t("contact.desc")}
             </p>
 
             <div className="space-y-6">
               <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-neon-surface border border-neon-border text-neon-green shrink-0">
+                <div className="p-3 rounded-xl bg-black/[0.03] border border-black/10 text-black shrink-0">
                   <MapPin className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-white font-bold">Shop Location / الموقع</h4>
-                  <p className="text-gray-300 text-base font-medium mt-1">عثمانية مركز - Osmaniye Merkez</p>
+                  <h4 className="text-black font-bold">Shop Location / الموقع</h4>
+                  <p className="text-gray-600 text-base font-medium mt-1">عثمانية مركز - Osmaniye Merkez</p>
                 </div>
               </div>
 
-              <a href={`tel:+${settings.whatsappNumber || "905377903339"}`} className="flex items-start gap-4 group cursor-pointer p-2 -m-2 rounded-xl hover:bg-neon-surface/40 transition-all">
-                <div className="p-3 rounded-xl bg-neon-surface border border-neon-border text-neon-green shrink-0 group-hover:bg-neon-green group-hover:text-neon-dark transition-all duration-300 shadow-[0_0_10px_rgba(255,103,0,0.2)]">
-                  <Phone className="w-6 h-6 animate-pulse" />
+              <a href={`tel:+${settings.whatsappNumber || "905377903339"}`} className="flex items-start gap-4 group cursor-pointer p-2 -m-2 rounded-xl hover:bg-black/[0.03] transition-all">
+                <div className="p-3 rounded-xl bg-black/[0.03] border border-black/10 text-black shrink-0 group-hover:bg-black group-hover:text-white transition-all duration-300">
+                  <Phone className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-white font-bold group-hover:text-neon-green transition-colors">Direct Line / Call Now</h4>
-                  <p className="text-[#ff6700] font-mono font-bold text-base mt-1 tracking-wider">+{settings.whatsappNumber || "90 537 790 33 39"}</p>
+                  <h4 className="text-black font-bold transition-colors">Direct Line / Call Now</h4>
+                  <p className="text-gray-600 font-mono font-bold text-base mt-1 tracking-wider">+{settings.whatsappNumber || "90 537 790 33 39"}</p>
                 </div>
               </a>
 
-              <a href="mailto:abdullah@sultan.com" className="flex items-start gap-4 group cursor-pointer p-2 -m-2 rounded-xl hover:bg-neon-surface/40 transition-all">
-                <div className="p-3 rounded-xl bg-neon-surface border border-neon-border text-neon-green shrink-0 group-hover:bg-neon-green group-hover:text-neon-dark transition-all duration-300 shadow-[0_0_10px_rgba(255,103,0,0.2)]">
-                  <Mail className="w-6 h-6 animate-pulse" />
+              <a href="mailto:abdullah@sultan.com" className="flex items-start gap-4 group cursor-pointer p-2 -m-2 rounded-xl hover:bg-black/[0.03] transition-all">
+                <div className="p-3 rounded-xl bg-black/[0.03] border border-black/10 text-black shrink-0 group-hover:bg-black group-hover:text-white transition-all duration-300">
+                  <Mail className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-white font-bold group-hover:text-neon-green transition-colors">Electronic Mail / البريد</h4>
-                  <p className="text-gray-300 font-mono text-sm mt-1 underline underline-offset-4 decoration-neon-green/40 group-hover:text-[#ff6700]">abdullah@sultan.com</p>
+                  <h4 className="text-black font-bold transition-colors">Electronic Mail / البريد</h4>
+                  <p className="text-gray-600 font-mono text-sm mt-1 underline underline-offset-4 decoration-black/30 group-hover:text-black">abdullah@sultan.com</p>
                 </div>
               </a>
             </div>
           </div>
 
           {/* Form Side */}
-          <Card className="p-8 sm:p-10 bg-neon-surface/60 border-neon-border shadow-2xl relative overflow-hidden">
-            <h3 className="text-2xl font-bold text-white mb-6">Send a Transmission</h3>
-            
+          <Card className="p-8 sm:p-10 bg-black/[0.02] border-black/10 shadow-xl relative overflow-hidden">
+            <h3 className="text-2xl font-bold text-black mb-6">Send a Message</h3>
+
             {submitted ? (
               <div className="py-12 text-center space-y-4">
-                <div className="w-16 h-16 rounded-full bg-neon-green/20 border-2 border-neon-green text-neon-green flex items-center justify-center mx-auto shadow-neon-glow animate-pulse">
+                <div className="w-16 h-16 rounded-full bg-black/5 border-2 border-black text-black flex items-center justify-center mx-auto">
                   <Send className="w-8 h-8" />
                 </div>
-                <h4 className="text-xl font-bold text-white">Message Transmitted!</h4>
-                <p className="text-gray-400 text-sm">تم حفظ رسالتك وإرسالها عبر واتساب مباشرة لصاحب المتجر.</p>
+                <h4 className="text-xl font-bold text-black">Message Sent!</h4>
+                <p className="text-gray-600 text-sm">تم حفظ رسالتك وإرسالها عبر واتساب مباشرة لصاحب المتجر.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Your Name</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="الاسم الكريم"
-                    className="w-full px-4 py-3 rounded-xl bg-neon-dark border border-neon-border text-white placeholder-gray-600 focus:outline-none focus:border-neon-green focus:ring-1 focus:ring-neon-green transition-all"
+                    className="w-full px-4 py-3 rounded-xl bg-white border border-black/15 text-black placeholder-gray-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="example@mail.com"
-                    className="w-full px-4 py-3 rounded-xl bg-neon-dark border border-neon-border text-white placeholder-gray-600 focus:outline-none focus:border-neon-green focus:ring-1 focus:ring-neon-green transition-all"
+                    className="w-full px-4 py-3 rounded-xl bg-white border border-black/15 text-black placeholder-gray-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Message</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
                   <textarea
                     rows={4}
                     required
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="اكتب رسالتك أو استفسارك هنا..."
-                    className="w-full px-4 py-3 rounded-xl bg-neon-dark border border-neon-border text-white placeholder-gray-600 focus:outline-none focus:border-neon-green focus:ring-1 focus:ring-neon-green transition-all resize-none"
+                    className="w-full px-4 py-3 rounded-xl bg-white border border-black/15 text-black placeholder-gray-400 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all resize-none"
                   ></textarea>
                 </div>
 
-                <Button type="submit" variant="neon" size="lg" className="w-full gap-2 font-bold">
+                <Button type="submit" size="lg" className="w-full gap-2 font-semibold bg-black text-white hover:bg-gray-800">
                   <span>إرسال الرسالة</span>
                   <Send className="w-4 h-4" />
                 </Button>

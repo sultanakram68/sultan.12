@@ -7,6 +7,9 @@ import { doc, getDoc, onSnapshot } from "firebase/firestore";
 export interface Settings {
   whatsappNumber: string;
   marqueeTexts: string[];
+  instagramUrl: string;
+  facebookUrl: string;
+  mapsUrl: string;
 }
 
 const defaultSettings: Settings = {
@@ -16,7 +19,10 @@ const defaultSettings: Settings = {
     "كفالة وضمان حقيقي 100% على كافة الأجهزة",
     "خصم 50% على الإكسسوارات والسماعات الأصلية",
     "صيانة فورية خلال 30 دقيقة فقط"
-  ]
+  ],
+  instagramUrl: "",
+  facebookUrl: "",
+  mapsUrl: ""
 };
 
 export function useSettings() {
@@ -30,7 +36,10 @@ export function useSettings() {
         const data = docSnap.data();
         setSettings({
           whatsappNumber: data.whatsappNumber || defaultSettings.whatsappNumber,
-          marqueeTexts: (data.marqueeTexts && Array.isArray(data.marqueeTexts)) ? data.marqueeTexts : defaultSettings.marqueeTexts
+          marqueeTexts: (data.marqueeTexts && Array.isArray(data.marqueeTexts)) ? data.marqueeTexts : defaultSettings.marqueeTexts,
+          instagramUrl: data.instagramUrl || defaultSettings.instagramUrl,
+          facebookUrl: data.facebookUrl || defaultSettings.facebookUrl,
+          mapsUrl: data.mapsUrl || defaultSettings.mapsUrl
         });
       }
       setLoading(false);

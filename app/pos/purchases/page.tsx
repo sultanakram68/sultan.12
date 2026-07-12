@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { Package, Truck, Search, Plus, Save, Barcode, X, Camera, Printer, Sparkles } from "lucide-react";
-import { collection, onSnapshot, doc, setDoc, updateDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { db, storage } from "@/lib/firebase";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import Script from "next/script";
 
 export default function POSPurchasesCorporate() {
@@ -11,7 +12,7 @@ export default function POSPurchasesCorporate() {
   const [searchQuery, setSearchQuery] = useState("");
   const [products, setProducts] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
-  
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formData, setFormData] = useState<any>({
     id: "", name: "", barcode: "", sku: "", imageUrl: "", category: "", purchasePrice: "", wholesalePrice: "", price: "", stock: "", minStock: "", supplier: ""
@@ -22,6 +23,50 @@ export default function POSPurchasesCorporate() {
   const [cameraTarget, setCameraTarget] = useState<"search" | "form">("search");
   const [scannerError, setScannerError] = useState<string | null>(null);
   const scannerRef = useRef<any>(null);
+
+  // Image Upload State
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("الرجاء اختيار ملف صورة صالح!");
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, file);
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setUploadProgress(Math.round(progress));
+        },
+        (error) => {
+          console.error("Upload error:", error);
+          alert("حدث خطأ أثناء تحميل الصورة. الرجاء التأكد من تفعيل وتكوين Firebase Storage.");
+          setIsUploading(false);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          setFormData((prev: any) => ({ ...prev, imageUrl: downloadURL }));
+          setIsUploading(false);
+        }
+      );
+    } catch (error) {
+      console.error("Upload catch error:", error);
+      alert("حدث خطأ غير متوقع.");
+      setIsUploading(false);
+    }
+  };
 
   useEffect(() => {
     const unsubProducts = onSnapshot(collection(db, "products"), (snap: any) => {
@@ -39,7 +84,8 @@ export default function POSPurchasesCorporate() {
 
   useEffect(() => {
     if (activeTab !== "purchases" || isFormOpen) return;
-    if (searchQuery.length > 3 && !isCameraOpen) {
+    // Only auto-open if the query is a full numeric barcode (>= 8 digits) to avoid opening on manual word search
+    if (searchQuery.length >= 8 && /^\d+$/.test(searchQuery) && !isCameraOpen) {
       const existingProduct = products.find(p => String(p.barcode || "") === String(searchQuery) || String(p.sku || "") === String(searchQuery));
       if (existingProduct) {
         setFormData({ ...existingProduct, id: existingProduct.id });
@@ -54,7 +100,7 @@ export default function POSPurchasesCorporate() {
   const playCashierBeep = () => {
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      
+
       const compressor = audioCtx.createDynamicsCompressor();
       compressor.threshold.setValueAtTime(-24, audioCtx.currentTime);
       compressor.knee.setValueAtTime(30, audioCtx.currentTime);
@@ -104,7 +150,7 @@ export default function POSPurchasesCorporate() {
       if (e.key === "Enter") {
         if (buffer.length >= 4) {
           playCashierBeep();
-          try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (err) {}
+          try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (err) { }
           if (isFormOpen) {
             setFormData((prev: any) => ({ ...prev, barcode: buffer }));
           } else {
@@ -137,17 +183,12 @@ export default function POSPurchasesCorporate() {
       const startWithConfig = (config: any) => {
         html5Qrcode.start(
           config,
-          { 
-            fps: 30, 
-            qrbox: { width: 250, height: 250 },
-            experimentalFeatures: { useBarCodeDetectorIfSupported: true },
-            disableFlip: false
-          },
+          { fps: 15, qrbox: { width: 250, height: 250 } },
           (text: string) => {
             if (!text || text.trim().length < 3) return;
             const cleanText = text.trim();
             playCashierBeep();
-            try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) {}
+            try { navigator.vibrate && navigator.vibrate([200, 100, 200]); } catch (e) { }
             if (target === "form") {
               setFormData((prev: any) => ({ ...prev, barcode: cleanText }));
             } else {
@@ -164,16 +205,16 @@ export default function POSPurchasesCorporate() {
             if (scannerRef.current) {
               try {
                 scannerRef.current.stop().then(() => {
-                  try { scannerRef.current.clear(); } catch(e) {}
+                  try { scannerRef.current.clear(); } catch (e) { }
                 }).catch(() => {
-                  try { scannerRef.current.clear(); } catch(e) {}
+                  try { scannerRef.current.clear(); } catch (e) { }
                 });
-              } catch(e) {
-                try { scannerRef.current.clear(); } catch(err) {}
+              } catch (e) {
+                try { scannerRef.current.clear(); } catch (err) { }
               }
             }
           },
-          () => {}
+          () => { }
         ).catch(() => {
           if (config && config.facingMode === "environment") {
             startWithConfig({ facingMode: "user" });
@@ -221,15 +262,15 @@ export default function POSPurchasesCorporate() {
       if (scannerRef.current) {
         try {
           scannerRef.current.stop().then(() => {
-            try { scannerRef.current.clear(); } catch(e) {}
+            try { scannerRef.current.clear(); } catch (e) { }
           }).catch(() => {
-            try { scannerRef.current.clear(); } catch(e) {}
+            try { scannerRef.current.clear(); } catch (e) { }
           });
-        } catch(e) {
-          try { scannerRef.current.clear(); } catch(err) {}
+        } catch (e) {
+          try { scannerRef.current.clear(); } catch (err) { }
         }
       }
-    } catch(e) {}
+    } catch (e) { }
 
     try {
       const videoElements = document.querySelectorAll("#reader video, video");
@@ -237,20 +278,20 @@ export default function POSPurchasesCorporate() {
         if (video.srcObject) {
           const stream = video.srcObject as MediaStream;
           stream.getTracks().forEach(track => {
-            try { track.stop(); track.enabled = false; } catch(err) {}
+            try { track.stop(); track.enabled = false; } catch (err) { }
           });
           video.srcObject = null;
         }
       });
-    } catch(e) {}
+    } catch (e) { }
 
     try {
       if (navigator.mediaDevices && (window as any).localMediaStream) {
         ((window as any).localMediaStream as MediaStream).getTracks().forEach(track => {
-          try { track.stop(); track.enabled = false; } catch(err) {}
+          try { track.stop(); track.enabled = false; } catch (err) { }
         });
       }
-    } catch(e) {}
+    } catch (e) { }
   };
 
   const toggleCamera = (target: "search" | "form" = "search") => {
@@ -296,6 +337,21 @@ export default function POSPurchasesCorporate() {
     (formData.sku && String(formData.sku).trim() !== "" && String(formData.sku).trim() !== "-" && (String(p.sku || "").trim() === String(formData.sku).trim() || String(p.barcode || "").trim() === String(formData.sku).trim()))
   ));
 
+  const handleDeleteProduct = async () => {
+    if (!formData.id) return;
+    const confirmDelete = window.confirm("⚠️ هل أنت متأكد من حذف هذا المنتج نهائياً من المخزون؟ لا يمكن التراجع عن هذه الخطوة!");
+    if (!confirmDelete) return;
+
+    try {
+      await deleteDoc(doc(db, "products", formData.id));
+      alert("تم حذف المنتج بنجاح!");
+      setIsFormOpen(false);
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("حدث خطأ أثناء حذف المنتج.");
+    }
+  };
+
   const handleSaveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (duplicateProduct) {
@@ -325,22 +381,22 @@ export default function POSPurchasesCorporate() {
   return (
     <>
       <div className="space-y-6 animate-in fade-in duration-500">
-        
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-black text-[#0F172A] mb-1">المشتريات والموردين</h1>
-            <p className="text-slate-500 font-medium">إدارة المخزون، المشتريات الجديدة، وحسابات الموردين</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0F172A] mb-0.5">المشتريات والموردين</h1>
+            <p className="text-slate-500 font-medium text-xs sm:text-sm">إدارة المخزون، المشتريات الجديدة، وحسابات الموردين</p>
           </div>
-          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
-            <button 
+          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-auto">
+            <button
               onClick={() => setActiveTab("purchases")}
-              className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'purchases' ? 'bg-white text-[#1E3A8A] shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-900'}`}
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'purchases' ? 'bg-white text-[#1E3A8A] shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-900'}`}
             >
               <Package size={18} /> المشتريات
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab("suppliers")}
-              className={`px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 ${activeTab === 'suppliers' ? 'bg-white text-[#1E3A8A] shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-900'}`}
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${activeTab === 'suppliers' ? 'bg-white text-[#1E3A8A] shadow-sm border border-slate-200' : 'text-slate-500 hover:text-slate-900'}`}
             >
               <Truck size={18} /> الموردين
             </button>
@@ -349,53 +405,70 @@ export default function POSPurchasesCorporate() {
 
         {activeTab === "purchases" && (
           <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col gap-3">
+              {/* Search Bar */}
               <div className="flex-1 relative">
-                <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <Search className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="امسح الباركود لإضافة مشتريات جديدة أو ابحث عن منتج..."
-                  className="w-full bg-white border border-slate-200 rounded-xl py-3.5 pr-12 pl-12 text-[#0F172A] focus:outline-none focus:border-[#1E3A8A] focus:ring-4 focus:ring-[#1E3A8A]/10 transition-all shadow-sm font-medium"
+                  placeholder="ابحث بالاسم أو امسح الباركود واضغط Enter..."
+                  className="w-full bg-white border border-slate-200 rounded-xl py-3 sm:py-3.5 pr-11 sm:pr-12 pl-11 sm:pl-12 text-[#0F172A] focus:outline-none focus:border-[#1E3A8A] focus:ring-4 focus:ring-[#1E3A8A]/10 transition-all shadow-sm font-medium text-sm sm:text-base"
                   value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && searchQuery.trim().length > 0) {
+                      const q = searchQuery.trim();
+                      const existingProduct = products.find(p => String(p.barcode || "") === q || String(p.sku || "") === q);
+                      if (existingProduct) {
+                        setFormData({ ...existingProduct, id: existingProduct.id });
+                      } else {
+                        setFormData({ id: "", name: "", barcode: q, sku: "", imageUrl: "", category: "هواتف وأجهزة ذكية", purchasePrice: "", wholesalePrice: "", price: "", stock: "", minStock: "", supplier: "" });
+                      }
+                      setIsFormOpen(true);
+                      setSearchQuery("");
+                    }
+                  }}
                 />
-                <Barcode className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-300" />
+                <Barcode className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 w-5 sm:w-6 h-5 sm:h-6 text-slate-300" />
               </div>
-              <button 
-                onClick={handleAutoLinkAllBarcodes}
-                className="bg-amber-500 hover:bg-amber-600 text-white px-5 py-3.5 rounded-xl font-bold transition-all text-sm flex items-center justify-center gap-2 shadow-sm shadow-amber-500/20"
-                title="توليد وربط الباركود تلقائياً لجميع المنتجات التي ليس لها باركود"
-              >
-                <Sparkles size={18} /> <span className="hidden md:inline">ربط وتوليد باركود للكل</span>
-              </button>
-              <button 
-                onClick={() => setIsPrintModalOpen(true)}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3.5 rounded-xl font-bold transition-all text-sm flex items-center justify-center gap-2 shadow-sm shadow-emerald-600/20"
-                title="طباعة ملصقات الباركود لجميع المنتجات"
-              >
-                <Printer size={18} /> <span className="hidden md:inline">طباعة الملصقات</span>
-              </button>
-              <button 
-                onClick={() => toggleCamera("search")}
-                className={`px-5 py-3.5 rounded-xl font-bold transition-all text-sm flex items-center justify-center gap-2 border ${isCameraOpen && cameraTarget === 'search' ? 'bg-red-50 text-red-600 border-red-200 shadow-sm' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 shadow-sm'}`}
-              >
-                {isCameraOpen && cameraTarget === 'search' ? <X size={20} /> : <Barcode size={20} />} <span className="hidden sm:inline">{isCameraOpen && cameraTarget === 'search' ? 'إغلاق الكاميرا' : 'مسح بالكاميرا'}</span>
-              </button>
-              <button 
-                onClick={() => { setFormData({ id: "", name: "", barcode: "", sku: "", imageUrl: "", category: "هواتف وأجهزة ذكية", purchasePrice: "", wholesalePrice: "", price: "", stock: "", minStock: "", supplier: "" }); setIsFormOpen(true); }}
-                className="bg-[#1E3A8A] hover:bg-[#152960] text-white px-6 py-3.5 rounded-xl font-bold transition-all text-sm flex items-center justify-center gap-2 shadow-sm shadow-[#1E3A8A]/20"
-              >
-                <Plus size={20} /> إضافة منتج يدوي
-              </button>
+              {/* Action Buttons Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                <button
+                  onClick={handleAutoLinkAllBarcodes}
+                  className="bg-amber-500 hover:bg-amber-600 text-white px-3 sm:px-5 py-3 rounded-xl font-bold transition-all text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm shadow-amber-500/20"
+                  title="توليد وربط الباركود تلقائياً لجميع المنتجات التي ليس لها باركود"
+                >
+                  <Sparkles size={16} /> <span className="hidden sm:inline">ربط باركود</span><span className="sm:hidden">ربط</span>
+                </button>
+                <button
+                  onClick={() => setIsPrintModalOpen(true)}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 sm:px-5 py-3 rounded-xl font-bold transition-all text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20"
+                  title="طباعة ملصقات الباركود لجميع المنتجات"
+                >
+                  <Printer size={16} /> <span className="hidden sm:inline">طباعة</span><span className="sm:hidden">طباعة</span>
+                </button>
+                <button
+                  onClick={() => toggleCamera("search")}
+                  className={`px-3 sm:px-5 py-3 rounded-xl font-bold transition-all text-xs sm:text-sm flex items-center justify-center gap-1.5 border ${isCameraOpen && cameraTarget === 'search' ? 'bg-red-50 text-red-600 border-red-200 shadow-sm' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50 shadow-sm'}`}
+                >
+                  {isCameraOpen && cameraTarget === 'search' ? <X size={18} /> : <Barcode size={18} />} <span className="hidden sm:inline">{isCameraOpen && cameraTarget === 'search' ? 'إغلاق' : 'كاميرا'}</span><span className="sm:hidden">{isCameraOpen && cameraTarget === 'search' ? 'إغلاق' : 'كاميرا'}</span>
+                </button>
+                <button
+                  onClick={() => { setFormData({ id: "", name: "", barcode: "", sku: "", imageUrl: "", category: "هواتف وأجهزة ذكية", purchasePrice: "", wholesalePrice: "", price: "", stock: "", minStock: "", supplier: "" }); setIsFormOpen(true); }}
+                  className="bg-[#1E3A8A] hover:bg-[#152960] text-white px-3 sm:px-6 py-3 rounded-xl font-bold transition-all text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm shadow-[#1E3A8A]/20"
+                >
+                  <Plus size={18} /> <span className="hidden sm:inline">إضافة منتج</span><span className="sm:hidden">إضافة</span>
+                </button>
+              </div>
             </div>
 
             {isCameraOpen && cameraTarget === "search" && (
-              <div className="bg-white border border-slate-200 p-6 rounded-2xl relative z-20 w-full flex flex-col items-center justify-center my-4 shadow-sm">
-                <div className="flex justify-between items-center w-full max-w-sm mb-4 text-[#0F172A]">
+              <div className="bg-white border border-slate-200 p-4 rounded-2xl relative z-20 w-full flex flex-col items-center justify-center my-4 shadow-sm">
+                <div className="flex justify-between items-center w-full max-w-sm mb-3 text-[#0F172A]">
                   <span className="font-bold text-sm flex items-center gap-2">
                     <Barcode size={18} className="text-[#1E3A8A]" />
-                    قم بتوجيه الكاميرا لباركود المنتج للبحث أو الإضافة
+                    قارئ الباركود
                   </span>
-                  <button onClick={() => toggleCamera("search")} className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors">
+                  <button onClick={() => toggleCamera("search")} className="p-1 text-slate-400 hover:text-slate-600 rounded transition-colors">
                     <X size={18} />
                   </button>
                 </div>
@@ -407,14 +480,14 @@ export default function POSPurchasesCorporate() {
                     </button>
                   </div>
                 )}
-                <div id="reader" className="w-full max-w-sm rounded-2xl overflow-hidden border border-slate-600 bg-black min-h-[250px] [&_video]:scale-[1.5] [&_video]:origin-center" />
-                <p className="text-xs text-slate-400 mt-3 text-center">سيتم التقاط الباركود وإدخاله في شريط البحث تلقائياً لفتح نموذج الإضافة أو التعديل</p>
+                <div id="reader" className="w-full max-w-sm rounded-xl overflow-hidden border border-slate-200 bg-black min-h-[250px]" />
               </div>
             )}
 
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-[#0F172A] mb-6">قائمة المنتجات (المخزون)</h2>
-              <div className="overflow-x-auto">
+            <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-6 shadow-sm">
+              <h2 className="text-lg sm:text-xl font-bold text-[#0F172A] mb-4 sm:mb-6">قائمة المنتجات (المخزون)</h2>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-right text-sm">
                   <thead>
                     <tr className="text-slate-500 border-b border-slate-100">
@@ -432,7 +505,7 @@ export default function POSPurchasesCorporate() {
                       <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
                         <td className="py-3 px-4 font-bold text-[#0F172A] flex items-center gap-3">
                           <div className="w-10 h-10 bg-slate-50 border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden">
-                            {p.imageUrl ? ( /* eslint-disable-next-line @next/next/no-img-element */ <img src={p.imageUrl} alt="" className="object-contain w-full h-full p-1 mix-blend-multiply" /> ) : (<Package size={20} className="text-slate-400" />)}
+                            {p.imageUrl ? ( /* eslint-disable-next-line @next/next/no-img-element */ <img src={p.imageUrl} alt="" className="object-contain w-full h-full p-1 mix-blend-multiply" />) : (<Package size={20} className="text-slate-400" />)}
                           </div>
                           {p.name}
                         </td>
@@ -450,7 +523,7 @@ export default function POSPurchasesCorporate() {
                         <td className="py-3 px-4 text-slate-500 font-medium">₺{p.purchasePrice || 0}</td>
                         <td className="py-3 px-4 text-[#1E3A8A] font-black">₺{p.price || 0}</td>
                         <td className="py-3 px-4">
-                          <button onClick={() => { setFormData({...p}); setIsFormOpen(true); }} className="text-sm font-bold text-[#1E3A8A] hover:text-[#0F2557] transition-colors bg-[#1E3A8A]/10 px-3 py-1.5 rounded-lg">
+                          <button onClick={() => { setFormData({ ...p }); setIsFormOpen(true); }} className="text-sm font-bold text-[#1E3A8A] hover:text-[#0F2557] transition-colors bg-[#1E3A8A]/10 px-3 py-1.5 rounded-lg">
                             تعديل
                           </button>
                         </td>
@@ -459,20 +532,68 @@ export default function POSPurchasesCorporate() {
                   </tbody>
                 </table>
               </div>
+
+              {/* Mobile Cards View */}
+              <div className="block md:hidden space-y-4">
+                {filteredProducts.map((p) => (
+                  <div key={p.id} className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-white border border-slate-100 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
+                        {p.imageUrl ? ( /* eslint-disable-next-line @next/next/no-img-element */ <img src={p.imageUrl} alt="" className="object-contain w-full h-full p-1 mix-blend-multiply" />) : (<Package size={24} className="text-slate-400" />)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-sm text-[#0F172A] truncate">{p.name}</h3>
+                        <span className="bg-[#1E3A8A]/10 text-[#1E3A8A] font-bold text-[10px] px-2 py-0.5 rounded-md mt-1 inline-block">
+                          {p.category || "هواتف وأجهزة ذكية"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs border-t border-slate-200/60 pt-3">
+                      <div>
+                        <span className="text-slate-400 block mb-0.5">الباركود:</span>
+                        <span className="font-mono font-medium text-slate-700">{p.barcode || '-'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block mb-0.5">المخزون:</span>
+                        <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${p.stock <= p.minStock ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-slate-200/60 text-slate-700'}`}>
+                          {p.stock}
+                        </span>
+                      </div>
+                      <div className="mt-1">
+                        <span className="text-slate-400 block mb-0.5">سعر الشراء:</span>
+                        <span className="font-bold text-slate-700">₺{p.purchasePrice || 0}</span>
+                      </div>
+                      <div className="mt-1">
+                        <span className="text-slate-400 block mb-0.5">سعر البيع:</span>
+                        <span className="font-black text-[#1E3A8A]">₺{p.price || 0}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                      <button onClick={() => { setFormData({ ...p }); setIsFormOpen(true); }} className="w-full text-center text-xs font-bold text-[#1E3A8A] hover:text-[#0F2557] bg-[#1E3A8A]/10 py-2.5 rounded-lg transition-colors">
+                        تعديل المنتج
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         )}
 
         {isFormOpen && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
-              <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-                <h2 className="text-xl font-bold text-[#0F172A]">{formData.id ? "تعديل مشتريات منتج" : "إضافة منتج جديد"}</h2>
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-end sm:items-center justify-center sm:p-4">
+            <div className="bg-white border border-slate-200 rounded-t-2xl sm:rounded-2xl p-4 sm:p-6 w-full sm:max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto shadow-2xl">
+              {/* Mobile drag handle */}
+              <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mb-3 sm:hidden" />
+              <div className="flex justify-between items-center mb-4 sm:mb-6 border-b border-slate-100 pb-3 sm:pb-4">
+                <h2 className="text-lg sm:text-xl font-bold text-[#0F172A]">{formData.id ? "تعديل مشتريات منتج" : "إضافة منتج جديد"}</h2>
                 <button onClick={() => { setIsFormOpen(false); if (isCameraOpen) setIsCameraOpen(false); }} className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors">
                   <X size={20} />
                 </button>
               </div>
-              
+
               {duplicateProduct && (
                 <div className="mb-4 bg-red-600 text-white px-4 py-3 rounded-xl shadow-lg flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2 duration-200 border border-red-500 font-bold text-sm">
                   <div className="flex items-center gap-2">
@@ -483,14 +604,14 @@ export default function POSPurchasesCorporate() {
                 </div>
               )}
 
-              <form onSubmit={handleSaveProduct} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  
+              <form onSubmit={handleSaveProduct} className="space-y-4 sm:space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+
                   <div className="space-y-2 lg:col-span-2">
                     <label className="text-sm font-bold text-slate-700">اسم المنتج</label>
-                    <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[#0F172A] focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/10 outline-none transition-all" />
+                    <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[#0F172A] focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/10 outline-none transition-all" />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-[#1E3A8A] flex items-center gap-1.5">
                       <span>🗂️ القسم على الموقع الرسمي</span>
@@ -498,7 +619,7 @@ export default function POSPurchasesCorporate() {
                     <select
                       required
                       value={formData.category || "هواتف وأجهزة ذكية"}
-                      onChange={e => setFormData({...formData, category: e.target.value})}
+                      onChange={e => setFormData({ ...formData, category: e.target.value })}
                       className="w-full bg-slate-50 border-2 border-[#1E3A8A]/30 rounded-xl px-4 py-2.5 text-[#0F172A] font-bold focus:border-[#1E3A8A] focus:bg-white outline-none transition-all shadow-sm"
                     >
                       <option value="هواتف وأجهزة ذكية">📱 هواتف وأجهزة ذكية</option>
@@ -510,14 +631,14 @@ export default function POSPurchasesCorporate() {
                       <option value="منتجات عامة / أخرى">📦 منتجات عامة / أخرى</option>
                     </select>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <label className="text-sm font-bold text-slate-700">الباركود</label>
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
-                          onClick={() => setFormData({...formData, barcode: "869" + Math.floor(100000000 + Math.random() * 900000000)})}
+                          onClick={() => setFormData({ ...formData, barcode: "869" + Math.floor(100000000 + Math.random() * 900000000) })}
                           className="text-xs font-bold px-2 py-1 rounded-lg bg-amber-100 text-amber-700 hover:bg-amber-200 transition-all flex items-center gap-1"
                           title="توليد رقم باركود تلقائي"
                         >
@@ -534,7 +655,7 @@ export default function POSPurchasesCorporate() {
                       </div>
                     </div>
                     <div className="relative">
-                      <input type="text" value={formData.barcode} onChange={e => setFormData({...formData, barcode: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[#0F172A] focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/10 outline-none font-mono text-left transition-all pr-10" dir="ltr" placeholder="امسح بالكاميرا أو اكتب..." />
+                      <input type="text" value={formData.barcode} onChange={e => setFormData({ ...formData, barcode: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[#0F172A] focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/10 outline-none font-mono text-left transition-all pr-10" dir="ltr" placeholder="امسح بالكاميرا أو اكتب..." />
                       <Barcode className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     </div>
                     {isCameraOpen && cameraTarget === "form" && (
@@ -556,40 +677,52 @@ export default function POSPurchasesCorporate() {
                       </div>
                     )}
                   </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-bold text-slate-700">رقم الصنف (SKU)</label>
-                    <input type="text" value={formData.sku} onChange={e => setFormData({...formData, sku: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[#0F172A] focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/10 outline-none font-mono text-left transition-all" dir="ltr" />
-                  </div>
-                  <div className="space-y-2 lg:col-span-2">
-                    <label className="text-sm font-bold text-slate-700">رابط الصورة (اختياري)</label>
-                    <input type="url" value={formData.imageUrl} onChange={e => setFormData({...formData, imageUrl: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[#0F172A] focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/10 outline-none font-mono text-left transition-all" dir="ltr" />
+
+                  <div className="space-y-2 sm:col-span-2 lg:col-span-2">
+                    <div className="flex justify-between items-center">
+                      <label className="text-sm font-bold text-slate-700">صورة المنتج</label>
+                      {isUploading && (
+                        <span className="text-xs text-[#1E3A8A] font-bold animate-pulse">
+                          جاري الرفع... {uploadProgress}%
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center">
+                      <label className={`cursor-pointer shrink-0 bg-[#1E3A8A]/10 hover:bg-[#1E3A8A]/20 text-[#1E3A8A] border-2 border-dashed border-[#1E3A8A]/30 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <span>📤 تحميل صورة</span>
+                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={isUploading} />
+                      </label>
+                      <input
+                        type="url"
+                        value={formData.imageUrl}
+                        onChange={e => setFormData({ ...formData, imageUrl: e.target.value })}
+                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 sm:px-4 py-2.5 text-[#0F172A] focus:border-[#1E3A8A] focus:ring-2 focus:ring-[#1E3A8A]/10 outline-none font-mono text-left transition-all text-xs sm:text-sm"
+                        dir="ltr"
+                        placeholder="رابط الصورة (تلقائي) أو الصق رابط..."
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2 bg-amber-50/50 p-4 rounded-xl border border-amber-200/50">
                     <label className="text-sm font-bold text-amber-700">سعر الشراء (التكلفة)</label>
-                    <input type="number" step="0.01" required value={formData.purchasePrice} onChange={e => setFormData({...formData, purchasePrice: e.target.value})} className="w-full bg-white border border-amber-200 rounded-lg px-4 py-2 text-[#0F172A] focus:border-amber-400 outline-none text-left font-bold" dir="ltr" />
+                    <input type="number" step="0.01" required value={formData.purchasePrice} onChange={e => setFormData({ ...formData, purchasePrice: e.target.value })} className="w-full bg-white border border-amber-200 rounded-lg px-4 py-2 text-[#0F172A] focus:border-amber-400 outline-none text-left font-bold" dir="ltr" />
                   </div>
-                  <div className="space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <label className="text-sm font-bold text-slate-600">سعر البيع بالجملة</label>
-                    <input type="number" step="0.01" value={formData.wholesalePrice} onChange={e => setFormData({...formData, wholesalePrice: e.target.value})} className="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 text-[#0F172A] focus:border-slate-400 outline-none text-left font-bold" dir="ltr" />
-                  </div>
-                  <div className="space-y-2 bg-emerald-50/50 p-4 rounded-xl border border-emerald-200/50">
+                  <div className="space-y-2 bg-emerald-50/50 p-4 rounded-xl border border-emerald-200/50 lg:col-span-2">
                     <label className="text-sm font-bold text-emerald-700">سعر البيع النهائي (المفرق)</label>
-                    <input type="number" step="0.01" required value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full bg-white border border-emerald-200 rounded-lg px-4 py-2 text-[#0F172A] focus:border-emerald-400 outline-none text-left font-black text-lg" dir="ltr" />
+                    <input type="number" step="0.01" required value={formData.price} onChange={e => setFormData({ ...formData, price: e.target.value })} className="w-full bg-white border border-emerald-200 rounded-lg px-4 py-2 text-[#0F172A] focus:border-emerald-400 outline-none text-left font-black text-lg" dir="ltr" />
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-slate-700">الكمية المشتراة (المخزون)</label>
-                    <input type="number" required value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[#0F172A] focus:border-[#1E3A8A] outline-none text-left font-bold" dir="ltr" />
+                    <input type="number" required value={formData.stock} onChange={e => setFormData({ ...formData, stock: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[#0F172A] focus:border-[#1E3A8A] outline-none text-left font-bold" dir="ltr" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-slate-700">الحد الأدنى للتنبيه</label>
-                    <input type="number" value={formData.minStock} onChange={e => setFormData({...formData, minStock: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[#0F172A] focus:border-[#1E3A8A] outline-none text-left" dir="ltr" />
+                    <input type="number" value={formData.minStock} onChange={e => setFormData({ ...formData, minStock: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[#0F172A] focus:border-[#1E3A8A] outline-none text-left" dir="ltr" />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-slate-700">المورد</label>
-                    <select value={formData.supplier} onChange={e => setFormData({...formData, supplier: e.target.value})} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[#0F172A] focus:border-[#1E3A8A] outline-none">
+                    <select value={formData.supplier} onChange={e => setFormData({ ...formData, supplier: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-[#0F172A] focus:border-[#1E3A8A] outline-none">
                       <option value="">-- اختر المورد --</option>
                       {suppliers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.company})</option>)}
                     </select>
@@ -597,24 +730,37 @@ export default function POSPurchasesCorporate() {
                 </div>
 
                 {formData.purchasePrice && formData.price && (
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex gap-8 items-center">
+                  <div className="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-200 flex gap-4 sm:gap-8 items-center">
                     <div>
-                      <span className="text-slate-500 text-xs block mb-1 font-medium">الربح المتوقع بالقطعة</span>
-                      <span className="text-emerald-600 font-bold text-lg">₺{(parseFloat(formData.price) - parseFloat(formData.purchasePrice)).toFixed(2)}</span>
+                      <span className="text-slate-500 text-[10px] sm:text-xs block mb-1 font-medium">الربح المتوقع بالقطعة</span>
+                      <span className="text-emerald-600 font-bold text-base sm:text-lg">₺{(parseFloat(formData.price) - parseFloat(formData.purchasePrice)).toFixed(2)}</span>
                     </div>
                     <div className="h-8 w-px bg-slate-200"></div>
                     <div>
-                      <span className="text-slate-500 text-xs block mb-1 font-medium">هامش الربح</span>
-                      <span className="text-[#1E3A8A] font-bold text-lg">{(((parseFloat(formData.price) - parseFloat(formData.purchasePrice)) / parseFloat(formData.purchasePrice)) * 100).toFixed(0)}%</span>
+                      <span className="text-slate-500 text-[10px] sm:text-xs block mb-1 font-medium">هامش الربح</span>
+                      <span className="text-[#1E3A8A] font-bold text-base sm:text-lg">{(((parseFloat(formData.price) - parseFloat(formData.purchasePrice)) / parseFloat(formData.purchasePrice)) * 100).toFixed(0)}%</span>
                     </div>
                   </div>
                 )}
 
-                <div className="flex justify-end gap-3 pt-6 border-t border-slate-100">
-                  <button type="button" onClick={() => { setIsFormOpen(false); if (isCameraOpen) setIsCameraOpen(false); }} className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-colors">إلغاء</button>
-                  <button type="submit" disabled={!!duplicateProduct} className="px-8 py-2.5 bg-[#1E3A8A] hover:bg-[#152960] disabled:bg-red-400 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-colors flex items-center gap-2 shadow-sm">
-                    <Save size={18} /> حفظ المنتج
-                  </button>
+                <div className="flex flex-col-reverse sm:flex-row justify-between items-stretch sm:items-center pt-4 sm:pt-6 border-t border-slate-100 gap-3">
+                  <div>
+                    {formData.id && (
+                      <button
+                        type="button"
+                        onClick={handleDeleteProduct}
+                        className="w-full sm:w-auto px-5 sm:px-6 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-xl font-bold transition-colors text-sm"
+                      >
+                        🗑️ حذف المنتج
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex gap-2 sm:gap-3">
+                    <button type="button" onClick={() => { setIsFormOpen(false); if (isCameraOpen) setIsCameraOpen(false); }} className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-colors text-sm">إلغاء</button>
+                    <button type="submit" disabled={!!duplicateProduct} className="flex-1 sm:flex-none px-5 sm:px-8 py-2.5 bg-[#1E3A8A] hover:bg-[#152960] disabled:bg-red-400 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-colors flex items-center justify-center gap-2 shadow-sm text-sm">
+                      <Save size={16} /> حفظ المنتج
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
@@ -665,7 +811,7 @@ export default function POSPurchasesCorporate() {
                       <h3 className="font-bold text-xs text-[#0F172A] truncate w-full" title={p.name}>{p.name}</h3>
                       <span className="text-emerald-600 font-black text-sm block mt-0.5">₺{p.price || 0}</span>
                     </div>
-                    
+
                     {/* Visual Barcode SVG Representation */}
                     <div className="w-full flex flex-col items-center my-1">
                       <svg className="w-full h-12" viewBox="0 0 160 40">

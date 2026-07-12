@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(gh auth *)",
+      "PowerShell(gh auth status 2>&1)",
+      "PowerShell(gh --version 2>&1)",
+      "Bash(gh --version)",
+      "Bash(git config *)",
+      "Bash(git remote *)",
+      "Bash(npx vercel *)",
+      "Bash(chromium-cli --help)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/store)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/product/test)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/profile)",
+      "Bash(npx tsc *)",
+      "Bash(curl -s -o /dev/null -w \"home:%{http_code}\\\\n\" http://localhost:3000)",
+      "Bash(curl -s -o /dev/null -w \"store:%{http_code}\\\\n\" http://localhost:3000/store)",
+      "Bash(curl -s -o /dev/null -w \"profile:%{http_code}\\\\n\" http://localhost:3000/profile)",
+      "Bash(magick --version)",
+      "Bash(where python *)",
+      "Bash(python3 -c \"from PIL import Image; print\\('ok'\\)\")",
+      "Bash(python3 -m pip install --quiet Pillow)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(find app *)",
+      "Bash(npx next *)",
+      "Bash(timeout 5 npx next lint --file components/Navbar.tsx)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3002/)",
+      "Bash(curl -s http://localhost:3002/)",
+      "Bash(git ls-remote *)",
+      "Bash(echo \"EXIT CODE: $?\")"
+    ]
+  }
+}
