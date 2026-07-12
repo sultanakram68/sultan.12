@@ -63,6 +63,17 @@ function WheelItem({
   const filter = useTransform(blurPx, (b) => `blur(${b.toFixed(2)}px)`);
   const glow = useTransform(absDelta, [0, 0.6, 1.2], [0.9, 0.3, 0]);
 
+  // How "selected" this item looks: fully inverted (black pill, white text) when
+  // centered in the wheel, or pinned on for a statically-active item (e.g. the
+  // open language toggle); fades to a plain white/black pill as it scrolls away.
+  const highlight = useTransform(absDelta, (d) => (item.active ? 1 : clamp(1 - d, 0, 1)));
+  const bg = useTransform(highlight, [0, 1], ["#ffffff", "#000000"]);
+  const borderColor = useTransform(highlight, [0, 1], ["rgba(0,0,0,0.1)", "#000000"]);
+  const textColor = useTransform(highlight, [0, 1], ["#000000", "#ffffff"]);
+  const iconBg = useTransform(highlight, [0, 1], ["rgba(0,0,0,0.05)", "rgba(255,255,255,0.15)"]);
+  const shadowOpacity = useTransform(highlight, [0, 1], [0.06, 0.25]);
+  const boxShadow = useTransform(shadowOpacity, (o) => `0 6px 20px rgba(0,0,0,${o.toFixed(2)})`);
+
   const Icon = item.icon;
 
   return (
@@ -77,30 +88,36 @@ function WheelItem({
         x,
         opacity,
         filter,
+        backgroundColor: bg,
+        borderColor,
+        boxShadow,
         left: "50%",
         marginLeft: -96,
         transformStyle: "preserve-3d",
       }}
-      className={`group absolute top-1/2 -mt-[26px] flex items-center gap-3 w-48 h-[52px] pl-3 pr-4 rounded-2xl border backdrop-blur-xl overflow-hidden transition-colors ${
-        item.active ? "border-black/60 bg-white" : "border-black/15 bg-white/90"
-      }`}
+      className="group absolute top-1/2 -mt-[26px] flex items-center gap-3 w-48 h-[52px] pl-3 pr-4 rounded-2xl border overflow-hidden"
     >
       <motion.span
         style={{ opacity: glow }}
-        className="absolute inset-0 rounded-2xl bg-black/5 pointer-events-none"
+        className="absolute inset-0 rounded-2xl bg-black/[0.04] pointer-events-none"
         aria-hidden="true"
       />
-      <span className="relative w-9 h-9 rounded-xl bg-black/5 flex items-center justify-center shrink-0 overflow-hidden">
+      <motion.span
+        style={{ backgroundColor: iconBg }}
+        className="relative w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
+      >
         {item.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={item.avatarUrl} alt="" className="w-full h-full object-cover" />
         ) : (
-          <Icon className="w-[18px] h-[18px] text-black" />
+          <motion.span style={{ color: textColor }} className="flex items-center justify-center">
+            <Icon className="w-[18px] h-[18px]" />
+          </motion.span>
         )}
-      </span>
-      <span className="relative text-sm font-medium text-black whitespace-nowrap truncate">
+      </motion.span>
+      <motion.span style={{ color: textColor }} className="relative text-sm font-semibold whitespace-nowrap truncate">
         {item.label}
-      </span>
+      </motion.span>
     </motion.button>
   );
 }
@@ -138,17 +155,35 @@ export function WheelMenu({ items, isOpen, onClose }: WheelMenuProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="fixed inset-0 z-40 bg-black/55 backdrop-blur-md"
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-40 bg-black/75 backdrop-blur-xl"
             onClick={onClose}
-          />
+          >
+            {/* Soft spotlight glow centered behind the wheel */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.10), transparent 55%)",
+              }}
+            />
+          </motion.div>
 
           {/* Plain positioning wrapper — keeps the wheel centered on screen without fighting
               framer-motion's own transform (x/scale) on the inner animated element. */}
           <div
-            className="fixed z-[55] w-56 h-[420px] pointer-events-none"
-            style={{ left: "50%", top: "50%", marginLeft: -112, marginTop: -210 }}
+            className="fixed z-[55] w-64 h-[460px] pointer-events-none flex flex-col items-center"
+            style={{ left: "50%", top: "50%", marginLeft: -128, marginTop: -230 }}
           >
+            <motion.span
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ delay: 0.1, duration: 0.25 }}
+              className="mb-4 inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white text-black text-xs font-bold uppercase tracking-widest shadow-lg"
+            >
+              القائمة
+            </motion.span>
+
             <motion.div
               key="wheel-container"
               initial={{ opacity: 0, scale: 0.85, y: 20 }}
@@ -164,11 +199,11 @@ export function WheelMenu({ items, isOpen, onClose }: WheelMenuProps) {
                 maskImage:
                   "linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%)",
               }}
-              className="relative w-full h-full touch-none select-none pointer-events-auto"
+              className="relative w-full h-[420px] touch-none select-none pointer-events-auto"
             >
-              {/* Lens / active-row highlight, evokes an Apple-style picker */}
+              {/* Lens / active-row guide ring — the centered item itself inverts to solid black */}
               <div
-                className="absolute top-1/2 -translate-y-1/2 w-48 h-14 rounded-2xl bg-black/5 border border-black/10 shadow-[0_0_30px_rgba(0,0,0,0.05)] pointer-events-none"
+                className="absolute top-1/2 -translate-y-1/2 w-48 h-14 rounded-2xl border border-white/25 pointer-events-none"
                 style={{ left: "50%", marginLeft: -96 }}
               />
 
@@ -176,6 +211,16 @@ export function WheelMenu({ items, isOpen, onClose }: WheelMenuProps) {
                 <WheelItem key={item.key} item={item} index={idx} count={count} rotation={rotation} />
               ))}
             </motion.div>
+
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ delay: 0.15, duration: 0.25 }}
+              className="mt-4 text-white/50 text-[11px] font-medium tracking-wide"
+            >
+              اسحب للأعلى أو الأسفل للتصفح
+            </motion.span>
           </div>
         </React.Fragment>
       )}
