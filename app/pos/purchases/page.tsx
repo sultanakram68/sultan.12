@@ -30,6 +30,25 @@ export default function POSPurchasesCorporate() {
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [removeBgEnabled, setRemoveBgEnabled] = useState(true);
 
+  // Background removal (@imgly/background-removal) ships onnxruntime-web
+  // bundles that Next.js 14's webpack can't compile. It's loaded straight
+  // from the CDN at runtime instead, via a browser-native import map, so
+  // the bundler never touches it.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (document.querySelector('script[data-bg-removal-importmap]')) return;
+    const map = document.createElement("script");
+    map.type = "importmap";
+    map.setAttribute("data-bg-removal-importmap", "true");
+    map.textContent = JSON.stringify({
+      imports: {
+        "onnxruntime-web": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.21.0/dist/ort.bundle.min.mjs",
+        "onnxruntime-web/webgpu": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.21.0/dist/ort.webgpu.bundle.min.mjs",
+      },
+    });
+    document.head.prepend(map);
+  }, []);
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -44,8 +63,9 @@ export default function POSPurchasesCorporate() {
     if (removeBgEnabled) {
       setIsRemovingBg(true);
       try {
-        const { removeBackground } = await import("@imgly/background-removal");
-        const blob = await removeBackground(file);
+        const bgRemovalUrl = "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/index.mjs";
+        const { removeBackground } = await import(/* webpackIgnore: true */ bgRemovalUrl);
+        const blob: Blob = await removeBackground(file, { device: "cpu" });
         fileToUpload = new File(
           [blob],
           file.name.replace(/\.[^.]+$/, "") + ".png",
