@@ -8,6 +8,7 @@ import { useSession, signIn } from "next-auth/react";
 import { useSettings } from "@/hooks/useSettings";
 import { WheelMenu, WheelMenuItem } from "./WheelMenu";
 import { WhatsAppIcon } from "./WhatsAppIcon";
+import { LiquidBottomNav } from "./LiquidBottomNav";
 
 /**
  * Navigation Bar Component
@@ -17,6 +18,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isLangOpen, setIsLangOpen] = React.useState(false);
   const [linkCopied, setLinkCopied] = React.useState(false);
+  const [activeBottomTab, setActiveBottomTab] = React.useState("home");
   const { language, setLanguage, t } = useLanguage();
   const { settings } = useSettings();
   const { data: session } = useSession();
@@ -184,14 +186,20 @@ export function Navbar() {
 
   const findWheelItem = (key: string) => wheelItems.find((item) => item.key === key);
 
-  // The handful of high-priority actions surfaced in the bottom tab bar (mobile)
-  const bottomNavItems = [
+  // The handful of high-priority actions surfaced in the bottom tab bar (mobile).
+  const bottomTabItems = [
     { key: "home", label: t("nav.home"), icon: Home, onSelect: () => findWheelItem("home")?.onSelect() },
     { key: "#crowd-favorites", label: t("nav.favorites"), icon: Star, onSelect: () => findWheelItem("#crowd-favorites")?.onSelect() },
-    { key: "order", label: t("nav.order"), icon: WhatsAppIcon, onSelect: () => findWheelItem("order")?.onSelect() },
     { key: "profile", label: session ? t("nav.profile") : t("nav.login"), icon: User, avatarUrl: session?.user?.image || undefined, onSelect: () => findWheelItem("profile")?.onSelect() },
     { key: "menu", label: t("nav.menu"), icon: Menu, onSelect: () => setIsOpen(true) },
   ];
+
+  // Return the liquid bubble to "home" once the radial menu closes
+  React.useEffect(() => {
+    if (!isOpen && activeBottomTab === "menu") {
+      setActiveBottomTab("home");
+    }
+  }, [isOpen, activeBottomTab]);
 
   // Close radial menu when clicking outside
   React.useEffect(() => {
@@ -265,7 +273,7 @@ export function Navbar() {
 
   return (
     <>
-    <header className="sticky top-0 z-50 w-full border-b border-black/10 bg-white/70 backdrop-blur-lg">
+    <header className="sticky top-0 z-50 w-full border-b border-black/10 bg-limixi-accent/10 backdrop-blur-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between relative">
 
         {/* Mobile Radial Menu (Left Aligned) */}
@@ -397,48 +405,13 @@ export function Navbar() {
       </div>
     </header>
 
-    {/* Bottom Navigation Bar (mobile) — quick access to the most important actions */}
-    <nav
-      className={`md:hidden fixed bottom-0 inset-x-0 z-50 h-16 bg-white/90 backdrop-blur-xl border-t border-black/10 flex items-stretch transition-transform duration-300 ${
-        isOpen ? "translate-y-full" : "translate-y-0"
-      }`}
-      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
-    >
-      {bottomNavItems.map((item) => {
-        const Icon = item.icon;
-        if (item.key === "order") {
-          return (
-            <button
-              key={item.key}
-              onClick={item.onSelect}
-              className="flex flex-col items-center justify-center gap-1 flex-1"
-            >
-              <span className="w-11 h-11 -mt-6 rounded-full bg-black text-white flex items-center justify-center shadow-lg shadow-black/30 border-4 border-white">
-                <Icon className="w-5 h-5" />
-              </span>
-              <span className="text-[10px] font-medium text-black/60">{item.label}</span>
-            </button>
-          );
-        }
-        return (
-          <button
-            key={item.key}
-            onClick={item.onSelect}
-            className="flex flex-col items-center justify-center gap-1 flex-1 text-black/60 hover:text-black transition-colors"
-          >
-            <span className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center">
-              {item.avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.avatarUrl} alt="" className="w-full h-full object-cover rounded-full" />
-              ) : (
-                <Icon className="w-5 h-5" />
-              )}
-            </span>
-            <span className="text-[10px] font-medium">{item.label}</span>
-          </button>
-        );
-      })}
-    </nav>
+    {/* Liquid morphing bottom navigation bar (mobile) — quick access to the most important actions */}
+    <LiquidBottomNav
+      items={bottomTabItems}
+      activeKey={activeBottomTab}
+      onActiveChange={setActiveBottomTab}
+      hidden={isOpen}
+    />
 
     {/* Edge swipe handle hint (mobile only, hidden while menu is open) */}
     <div

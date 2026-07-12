@@ -105,11 +105,6 @@ export default function POSPurchasesCorporate() {
       return;
     }
 
-    if (file.size > 8 * 1024 * 1024) {
-      alert("حجم الصورة كبير جداً. الرجاء اختيار صورة أصغر من 8 ميجابايت.");
-      return;
-    }
-
     let imageBlob: Blob = file;
 
     if (removeBgEnabled) {
@@ -128,12 +123,13 @@ export default function POSPurchasesCorporate() {
     setIsUploading(true);
 
     try {
-      const resized = await resizeImageBlob(imageBlob, 1200);
-      const dataUrl = await readBlobAsDataURL(resized);
-
-      if (dataUrl.length > 900_000) {
-        alert("الصورة كبيرة جداً بعد المعالجة. الرجاء تجربة صورة أخرى.");
-        return;
+      // Keep shrinking the max dimension until the base64 payload fits Firestore's
+      // ~1MB document limit — never reject a photo outright, just compress harder.
+      let dim = 1200;
+      let dataUrl = await readBlobAsDataURL(await resizeImageBlob(imageBlob, dim));
+      while (dataUrl.length > 900_000 && dim > 150) {
+        dim = Math.round(dim * 0.75);
+        dataUrl = await readBlobAsDataURL(await resizeImageBlob(imageBlob, dim));
       }
 
       setFormData((prev: any) => ({ ...prev, imageUrl: dataUrl }));

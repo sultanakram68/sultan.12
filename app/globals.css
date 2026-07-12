@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* LIMIXI design tokens (Store front only — see design brief). Additive only:
+   POS/Admin keep using the neon/saas-* tokens defined further below. */
+:root {
+  --limixi-bg: #F2F2E4;
+  --limixi-accent: #00F5C9;
+  --limixi-dark: #342E37;
+  --limixi-blue: #007AFF;
+  --limixi-success: #3FD414;
+  --limixi-highlight: #F7AD19;
+}
+
 @layer base {
   html, body {
     scroll-behavior: smooth;
@@ -85,6 +96,19 @@
 .pos-dark-mode video,
 .pos-dark-mode .pos-dark-ignore {
   filter: invert(1) hue-rotate(180deg);
+}
+
+/* LIMIXI signature card shape — defined once, reused everywhere a "breakout"
+   card is needed (§5 of the design brief). The whole top edge is one
+   diagonal (higher break on the right, lower break on the left), bottom
+   two corners stay normally rounded, so the silhouette reads as a brand
+   shape, not a generic rounded card. SSR/pre-hydration fallback only —
+   ProductCard.tsx replaces this with a precisely measured rounded-notch
+   path (via clip-path: path()) once it mounts, so the thin border can
+   trace the whole outline, notch included. */
+.limixi-card-shape {
+  border-radius: 28px;
+  clip-path: polygon(100% 14%, 100% 100%, 0% 100%, 0% 34%);
 }
 
 /* Universal SaaS UI Utilities (@layer components) */
