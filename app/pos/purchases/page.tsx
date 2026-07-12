@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Package, Truck, Search, Plus, Save, Barcode, X, Camera, Printer, Sparkles } from "lucide-react";
+import { Package, Truck, Search, Plus, Save, Barcode, X, Camera, Printer, Sparkles, Eye } from "lucide-react";
 import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import Script from "next/script";
@@ -68,6 +68,14 @@ export default function POSPurchasesCorporate() {
   const [isUploading, setIsUploading] = useState(false);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [removeBgEnabled, setRemoveBgEnabled] = useState(true);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  const checkerboardStyle = {
+    backgroundImage:
+      "linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%)",
+    backgroundSize: "10px 10px",
+    backgroundPosition: "0 0, 0 5px, 5px -5px, -5px 0px",
+  } as const;
 
   // Background removal (@imgly/background-removal) ships onnxruntime-web
   // bundles that Next.js 14's webpack can't compile. It's loaded straight
@@ -784,18 +792,19 @@ export default function POSPurchasesCorporate() {
                         placeholder="رابط الصورة (تلقائي) أو الصق رابط..."
                       />
                       {formData.imageUrl && (
-                        <div
-                          className="shrink-0 w-16 h-16 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center"
-                          style={{
-                            backgroundImage:
-                              "linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%)",
-                            backgroundSize: "10px 10px",
-                            backgroundPosition: "0 0, 0 5px, 5px -5px, -5px 0px",
-                          }}
+                        <button
+                          type="button"
+                          onClick={() => setIsPreviewOpen(true)}
+                          title="معاينة الصورة كاملة"
+                          className="relative shrink-0 w-16 h-16 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center hover:border-[#1E3A8A] transition-all"
+                          style={checkerboardStyle}
                         >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={formData.imageUrl} alt="معاينة" className="object-contain w-full h-full p-1" />
-                        </div>
+                          <span className="absolute bottom-0.5 right-0.5 bg-[#1E3A8A] text-white rounded-full p-1 shadow">
+                            <Eye size={11} />
+                          </span>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -938,6 +947,39 @@ export default function POSPurchasesCorporate() {
                   <p className="text-sm text-slate-400 mt-2">اضغط على زر (ربط وتوليد باركود للكل) لتنظيم جميع منتجاتك تلقائياً.</p>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Full-size Image Preview Modal (check for background-removal defects) */}
+        {isPreviewOpen && formData.imageUrl && (
+          <div
+            className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-[200] flex items-center justify-center p-4"
+            onClick={() => setIsPreviewOpen(false)}
+          >
+            <div
+              className="relative bg-white rounded-2xl p-4 max-w-lg w-full shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-bold text-[#0F172A] text-sm">معاينة صورة المنتج</h3>
+                <button
+                  onClick={() => setIsPreviewOpen(false)}
+                  className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <div
+                className="w-full aspect-square rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center"
+                style={checkerboardStyle}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={formData.imageUrl} alt="معاينة كاملة" className="object-contain w-full h-full p-2" />
+              </div>
+              <p className="text-xs text-slate-400 mt-3 text-center">
+                إذا لاحظت أي عيوب أو بقايا من الخلفية، ارفع الصورة من جديد أو عطّل "إزالة الخلفية تلقائياً" وارفعها كما هي.
+              </p>
             </div>
           </div>
         )}
