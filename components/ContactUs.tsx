@@ -65,7 +65,7 @@ export function ContactUs() {
 
             <div className="space-y-6">
               <div className="flex items-start gap-4">
-                <div className="p-3 rounded-xl bg-black/[0.03] border border-black/10 text-black shrink-0">
+                <div className="w-12 h-12 rounded-full bg-black/[0.03] border border-black/10 text-black shrink-0 flex items-center justify-center">
                   <MapPin className="w-6 h-6" />
                 </div>
                 <div>
@@ -75,7 +75,7 @@ export function ContactUs() {
               </div>
 
               <a href={`tel:+${settings.whatsappNumber || "905377903339"}`} className="flex items-start gap-4 group cursor-pointer p-2 -m-2 rounded-xl hover:bg-black/[0.03] transition-all">
-                <div className="p-3 rounded-xl bg-black/[0.03] border border-black/10 text-black shrink-0 group-hover:bg-black group-hover:text-white transition-all duration-300">
+                <div className="w-12 h-12 rounded-full bg-black/[0.03] border border-black/10 text-black shrink-0 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all duration-300">
                   <Phone className="w-6 h-6" />
                 </div>
                 <div>
@@ -85,7 +85,7 @@ export function ContactUs() {
               </a>
 
               <a href="mailto:abdullah@sultan.com" className="flex items-start gap-4 group cursor-pointer p-2 -m-2 rounded-xl hover:bg-black/[0.03] transition-all">
-                <div className="p-3 rounded-xl bg-black/[0.03] border border-black/10 text-black shrink-0 group-hover:bg-black group-hover:text-white transition-all duration-300">
+                <div className="w-12 h-12 rounded-full bg-black/[0.03] border border-black/10 text-black shrink-0 flex items-center justify-center group-hover:bg-black group-hover:text-white transition-all duration-300">
                   <Mail className="w-6 h-6" />
                 </div>
                 <div>
@@ -97,7 +97,7 @@ export function ContactUs() {
           </div>
 
           {/* Form Side */}
-          <Card className="p-8 sm:p-10 bg-black/[0.02] border-black/10 shadow-xl relative overflow-hidden">
+          <Card className="p-8 sm:p-10 bg-black/[0.02] border-black/10 rounded-3xl shadow-xl relative overflow-hidden">
             <h3 className="text-2xl font-bold text-black mb-6">Send a Message</h3>
 
             {submitted ? (

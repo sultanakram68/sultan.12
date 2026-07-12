@@ -17,6 +17,12 @@ export function HeroSection() {
     <section id="hero" className="relative overflow-hidden pt-12 lg:pt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
 
+        {/* Eyebrow Badge */}
+        <div className="inline-flex items-center gap-2 text-black text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-black/15 bg-black/[0.03] mb-6">
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>{t("hero.badge")}</span>
+        </div>
+
         {/* Main Headline */}
         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-black max-w-5xl mx-auto leading-tight mb-8">
           {t("hero.title1")} <span className="text-black/50">{t("hero.title2")}</span>
@@ -43,29 +49,24 @@ export function HeroSection() {
         </div>
       </div>
 
-
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center pb-24 lg:pb-32">
-        {/* Metrics Bar */}
-        <div className="mt-4 pt-10 border-t border-black/10 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
-          <div>
-            <div className="text-3xl font-bold text-black">100%</div>
-            <div className="text-xs text-gray-500 mt-1 uppercase tracking-wider">{t("hero.m1.label")}</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-black">4.9 ★</div>
-            <div className="text-xs text-gray-500 mt-1 uppercase tracking-wider">{t("hero.m2.label")}</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-black">24/7</div>
-            <div className="text-xs text-gray-500 mt-1 uppercase tracking-wider">{t("hero.m3.label")}</div>
-          </div>
-          <div>
-            <div className="text-3xl font-bold text-black">15m</div>
-            <div className="text-xs text-gray-500 mt-1 uppercase tracking-wider">{t("hero.m4.label")}</div>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 pb-24 lg:pb-32">
+        {/* Metrics Cards */}
+        <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+          {[
+            { value: "100%", label: t("hero.m1.label") },
+            { value: "4.9 ★", label: t("hero.m2.label") },
+            { value: "24/7", label: t("hero.m3.label") },
+            { value: "15m", label: t("hero.m4.label") },
+          ].map((stat, i) => (
+            <div
+              key={i}
+              className="rounded-3xl border border-black/10 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.04)] px-4 py-6 text-center hover:border-black/25 hover:-translate-y-0.5 transition-all duration-300"
+            >
+              <div className="text-2xl sm:text-3xl font-bold text-black">{stat.value}</div>
+              <div className="text-[11px] text-gray-500 mt-1.5 uppercase tracking-wider">{stat.label}</div>
+            </div>
+          ))}
         </div>
-
       </div>
 
       {/* Full-Width Marquee Ticker Ribbon (Monochrome) - Moved to bottom */}

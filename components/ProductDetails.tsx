@@ -56,8 +56,8 @@ export function ProductDetails() {
         {/* Feature Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {features.map((feat, index) => (
-            <Card key={index} className="bg-white border-black/10 hover:border-black/30 shadow-[0_2px_8px_rgba(0,0,0,0.06)] p-6 flex flex-col sm:flex-row gap-6 items-start">
-              <div className="p-4 rounded-2xl bg-black/[0.03] border border-black/15 shrink-0">
+            <Card key={index} className="bg-white border-black/10 hover:border-black/30 rounded-3xl shadow-[0_2px_8px_rgba(0,0,0,0.06)] p-6 flex flex-col sm:flex-row gap-6 items-start">
+              <div className="w-16 h-16 rounded-full bg-black/[0.03] border border-black/15 shrink-0 flex items-center justify-center">
                 {feat.icon}
               </div>
               <div>
