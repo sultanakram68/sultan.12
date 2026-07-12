@@ -47,6 +47,73 @@ const resizeImageBlob = (blob: Blob, maxDim: number): Promise<Blob> =>
     img.src = URL.createObjectURL(blob);
   });
 
+// Crops a transparent-background image tightly to its visible content (the
+// product silhouette left after background removal), with a small fixed
+// padding. Every uploaded photo gets framed the same way regardless of how
+// much empty margin the original photo had, so on the storefront's
+// breakout product card (a fixed-proportion shape) every product ends up
+// poking out of the card by roughly the same amount.
+const cropToContent = (blob: Blob, paddingPct = 0.06): Promise<Blob> =>
+  new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Canvas not supported"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+
+      const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const alphaThreshold = 10;
+      let minX = width, minY = height, maxX = -1, maxY = -1;
+      for (let y = 0; y < height; y++) {
+        const rowOffset = y * width * 4;
+        for (let x = 0; x < width; x++) {
+          if (data[rowOffset + x * 4 + 3] > alphaThreshold) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+
+      URL.revokeObjectURL(img.src);
+
+      // Nothing visible found (fully transparent) — nothing sensible to crop to
+      if (maxX < minX || maxY < minY) {
+        canvas.toBlob((result) => (result ? resolve(result) : reject(new Error("Crop failed"))), "image/png");
+        return;
+      }
+
+      const boxW = maxX - minX + 1;
+      const boxH = maxY - minY + 1;
+      const pad = Math.round(Math.max(boxW, boxH) * paddingPct);
+
+      const cropX = Math.max(0, minX - pad);
+      const cropY = Math.max(0, minY - pad);
+      const cropW = Math.min(width, maxX + pad + 1) - cropX;
+      const cropH = Math.min(height, maxY + pad + 1) - cropY;
+
+      const out = document.createElement("canvas");
+      out.width = cropW;
+      out.height = cropH;
+      const outCtx = out.getContext("2d");
+      if (!outCtx) {
+        reject(new Error("Canvas not supported"));
+        return;
+      }
+      outCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+      out.toBlob((result) => (result ? resolve(result) : reject(new Error("Crop failed"))), "image/png");
+    };
+    img.onerror = () => reject(new Error("Could not load image for cropping"));
+    img.src = URL.createObjectURL(blob);
+  });
+
 export default function POSPurchasesCorporate() {
   const [activeTab, setActiveTab] = useState<"purchases" | "suppliers">("purchases");
   const [searchQuery, setSearchQuery] = useState("");
@@ -123,13 +190,20 @@ export default function POSPurchasesCorporate() {
     setIsUploading(true);
 
     try {
+      // Cap resolution first so the pixel scan below stays fast, then — if the
+      // background was removed — crop tightly to the product's actual silhouette
+      // with a small fixed margin, so every product frames the same way on the
+      // storefront's card regardless of how the original photo was shot.
+      const capped = await resizeImageBlob(imageBlob, 1600);
+      const framed = removeBgEnabled ? await cropToContent(capped) : capped;
+
       // Keep shrinking the max dimension until the base64 payload fits Firestore's
       // ~1MB document limit — never reject a photo outright, just compress harder.
       let dim = 1200;
-      let dataUrl = await readBlobAsDataURL(await resizeImageBlob(imageBlob, dim));
+      let dataUrl = await readBlobAsDataURL(await resizeImageBlob(framed, dim));
       while (dataUrl.length > 900_000 && dim > 150) {
         dim = Math.round(dim * 0.75);
-        dataUrl = await readBlobAsDataURL(await resizeImageBlob(imageBlob, dim));
+        dataUrl = await readBlobAsDataURL(await resizeImageBlob(framed, dim));
       }
 
       setFormData((prev: any) => ({ ...prev, imageUrl: dataUrl }));
