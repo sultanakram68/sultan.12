@@ -27,6 +27,8 @@ export default function POSPurchasesCorporate() {
   // Image Upload State
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isRemovingBg, setIsRemovingBg] = useState(false);
+  const [removeBgEnabled, setRemoveBgEnabled] = useState(true);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -37,12 +39,31 @@ export default function POSPurchasesCorporate() {
       return;
     }
 
+    let fileToUpload: File = file;
+
+    if (removeBgEnabled) {
+      setIsRemovingBg(true);
+      try {
+        const { removeBackground } = await import("@imgly/background-removal");
+        const blob = await removeBackground(file);
+        fileToUpload = new File(
+          [blob],
+          file.name.replace(/\.[^.]+$/, "") + ".png",
+          { type: "image/png" }
+        );
+      } catch (error) {
+        console.error("Background removal failed, uploading original image:", error);
+      } finally {
+        setIsRemovingBg(false);
+      }
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
 
     try {
-      const storageRef = ref(storage, `products/${Date.now()}_${file.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
+      const storageRef = ref(storage, `products/${Date.now()}_${fileToUpload.name}`);
+      const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
 
       uploadTask.on(
         "state_changed",
@@ -679,18 +700,32 @@ export default function POSPurchasesCorporate() {
                   </div>
 
                   <div className="space-y-2 sm:col-span-2 lg:col-span-2">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center flex-wrap gap-2">
                       <label className="text-sm font-bold text-slate-700">صورة المنتج</label>
-                      {isUploading && (
+                      {isRemovingBg ? (
+                        <span className="text-xs text-purple-700 font-bold animate-pulse flex items-center gap-1">
+                          <Sparkles size={12} /> جاري إزالة الخلفية تلقائياً...
+                        </span>
+                      ) : isUploading ? (
                         <span className="text-xs text-[#1E3A8A] font-bold animate-pulse">
                           جاري الرفع... {uploadProgress}%
                         </span>
+                      ) : (
+                        <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={removeBgEnabled}
+                            onChange={e => setRemoveBgEnabled(e.target.checked)}
+                            className="rounded accent-[#1E3A8A]"
+                          />
+                          إزالة الخلفية تلقائياً
+                        </label>
                       )}
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 sm:items-center">
-                      <label className={`cursor-pointer shrink-0 bg-[#1E3A8A]/10 hover:bg-[#1E3A8A]/20 text-[#1E3A8A] border-2 border-dashed border-[#1E3A8A]/30 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                      <label className={`cursor-pointer shrink-0 bg-[#1E3A8A]/10 hover:bg-[#1E3A8A]/20 text-[#1E3A8A] border-2 border-dashed border-[#1E3A8A]/30 px-4 sm:px-5 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-2 ${isUploading || isRemovingBg ? 'opacity-50 pointer-events-none' : ''}`}>
                         <span>📤 تحميل صورة</span>
-                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={isUploading} />
+                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={isUploading || isRemovingBg} />
                       </label>
                       <input
                         type="url"
@@ -700,6 +735,20 @@ export default function POSPurchasesCorporate() {
                         dir="ltr"
                         placeholder="رابط الصورة (تلقائي) أو الصق رابط..."
                       />
+                      {formData.imageUrl && (
+                        <div
+                          className="shrink-0 w-16 h-16 rounded-xl border border-slate-200 overflow-hidden flex items-center justify-center"
+                          style={{
+                            backgroundImage:
+                              "linear-gradient(45deg, #e2e8f0 25%, transparent 25%), linear-gradient(-45deg, #e2e8f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e2e8f0 75%), linear-gradient(-45deg, transparent 75%, #e2e8f0 75%)",
+                            backgroundSize: "10px 10px",
+                            backgroundPosition: "0 0, 0 5px, 5px -5px, -5px 0px",
+                          }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={formData.imageUrl} alt="معاينة" className="object-contain w-full h-full p-1" />
+                        </div>
+                      )}
                     </div>
                   </div>
 
