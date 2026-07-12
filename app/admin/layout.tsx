@@ -94,25 +94,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </div>
 
-      {/* Floating Bottom Dock (mobile only) — the blue circle slides to and
-          adopts the icon of whichever item is active */}
+      {/* Flat Bottom Nav (mobile only) — active item gets a soft highlighted pill, no floating circle */}
       <nav className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-xs">
-        <div className="relative flex items-end justify-between bg-[#1c1c1e]/95 backdrop-blur-xl border border-zinc-800/60 rounded-full px-4 pt-6 pb-3 shadow-2xl shadow-black/60">
+        <div className="relative flex items-center justify-between bg-[#1c1c1e]/95 backdrop-blur-xl border border-zinc-800/60 rounded-full px-2 py-2 shadow-2xl shadow-black/60">
           {BOTTOM_NAV_ITEMS.map((item, i) => {
             const isActive = pathname === item.href;
             return (
-              <Link key={i} href={item.href} className="relative flex-1 flex flex-col items-center gap-1">
+              <Link key={i} href={item.href} className="relative flex-1">
                 {isActive && (
                   <motion.div
                     layoutId="admin-dock-active"
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    className="absolute -top-9 w-14 h-14 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/40 border-4 border-zinc-950"
-                  >
-                    <item.icon className="w-6 h-6 text-white" />
-                  </motion.div>
+                    className="absolute inset-0 rounded-full bg-white"
+                  />
                 )}
-                {!isActive && <item.icon className="w-5 h-5 text-zinc-500" />}
-                <span className={`text-[10px] transition-colors ${isActive ? "text-blue-400 mt-6" : "text-zinc-500"}`}>{item.name}</span>
+                <div className="relative flex flex-col items-center gap-1 py-1.5">
+                  <item.icon className={`w-5 h-5 transition-colors ${isActive ? "text-black" : "text-zinc-500"}`} />
+                  <span className={`text-[10px] transition-colors ${isActive ? "text-black font-medium" : "text-zinc-500"}`}>{item.name}</span>
+                </div>
               </Link>
             );
           })}
