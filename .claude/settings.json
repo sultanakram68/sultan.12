@@ -29,7 +29,16 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3002/)",
       "Bash(curl -s http://localhost:3002/)",
       "Bash(git ls-remote *)",
-      "Bash(echo \"EXIT CODE: $?\")"
+      "Bash(echo \"EXIT CODE: $?\")",
+      "Bash(git count-objects *)",
+      "Bash(powershell -Command \"Get-Process git -ErrorAction SilentlyContinue | Select-Object Id,ProcessName,CPU,WorkingSet | Format-Table -AutoSize\")",
+      "Bash(git rev-list *)",
+      "Bash(git cat-file *)",
+      "Bash(sort -k3 -n -r)",
+      "Bash(git ls-tree *)",
+      "Bash(git check-ignore *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(git filter-repo *)"
     ]
   }
 }
