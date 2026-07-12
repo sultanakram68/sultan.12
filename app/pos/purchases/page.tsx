@@ -109,7 +109,7 @@ export default function POSPurchasesCorporate() {
       try {
         const bgRemovalUrl = "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/index.mjs";
         const { removeBackground } = await import(/* webpackIgnore: true */ bgRemovalUrl);
-        imageBlob = await removeBackground(file, { device: "cpu" });
+        imageBlob = await removeBackground(file, { device: "cpu", model: "isnet" });
       } catch (error) {
         console.error("Background removal failed, using original image:", error);
       } finally {
