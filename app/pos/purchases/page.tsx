@@ -3,9 +3,49 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Package, Truck, Search, Plus, Save, Barcode, X, Camera, Printer, Sparkles } from "lucide-react";
 import { collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import { db, storage } from "@/lib/firebase";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { db } from "@/lib/firebase";
 import Script from "next/script";
+
+// Reads a Blob as a base64 data URL (Firebase Storage isn't provisioned on this
+// project, so product images are stored inline in Firestore instead).
+const readBlobAsDataURL = (blob: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+
+// Downscales an image blob (preserving transparency) so it stays well under
+// Firestore's ~1MB document size limit once base64-encoded.
+const resizeImageBlob = (blob: Blob, maxDim: number): Promise<Blob> =>
+  new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        const scale = maxDim / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Canvas not supported"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (result) => (result ? resolve(result) : reject(new Error("Resize failed"))),
+        "image/png"
+      );
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = () => reject(new Error("Could not load image for resizing"));
+    img.src = URL.createObjectURL(blob);
+  });
 
 export default function POSPurchasesCorporate() {
   const [activeTab, setActiveTab] = useState<"purchases" | "suppliers">("purchases");
@@ -26,7 +66,6 @@ export default function POSPurchasesCorporate() {
 
   // Image Upload State
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [isRemovingBg, setIsRemovingBg] = useState(false);
   const [removeBgEnabled, setRemoveBgEnabled] = useState(true);
 
@@ -58,53 +97,42 @@ export default function POSPurchasesCorporate() {
       return;
     }
 
-    let fileToUpload: File = file;
+    if (file.size > 8 * 1024 * 1024) {
+      alert("حجم الصورة كبير جداً. الرجاء اختيار صورة أصغر من 8 ميجابايت.");
+      return;
+    }
+
+    let imageBlob: Blob = file;
 
     if (removeBgEnabled) {
       setIsRemovingBg(true);
       try {
         const bgRemovalUrl = "https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/dist/index.mjs";
         const { removeBackground } = await import(/* webpackIgnore: true */ bgRemovalUrl);
-        const blob: Blob = await removeBackground(file, { device: "cpu" });
-        fileToUpload = new File(
-          [blob],
-          file.name.replace(/\.[^.]+$/, "") + ".png",
-          { type: "image/png" }
-        );
+        imageBlob = await removeBackground(file, { device: "cpu" });
       } catch (error) {
-        console.error("Background removal failed, uploading original image:", error);
+        console.error("Background removal failed, using original image:", error);
       } finally {
         setIsRemovingBg(false);
       }
     }
 
     setIsUploading(true);
-    setUploadProgress(0);
 
     try {
-      const storageRef = ref(storage, `products/${Date.now()}_${fileToUpload.name}`);
-      const uploadTask = uploadBytesResumable(storageRef, fileToUpload);
+      const resized = await resizeImageBlob(imageBlob, 1200);
+      const dataUrl = await readBlobAsDataURL(resized);
 
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setUploadProgress(Math.round(progress));
-        },
-        (error) => {
-          console.error("Upload error:", error);
-          alert("حدث خطأ أثناء تحميل الصورة. الرجاء التأكد من تفعيل وتكوين Firebase Storage.");
-          setIsUploading(false);
-        },
-        async () => {
-          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          setFormData((prev: any) => ({ ...prev, imageUrl: downloadURL }));
-          setIsUploading(false);
-        }
-      );
+      if (dataUrl.length > 900_000) {
+        alert("الصورة كبيرة جداً بعد المعالجة. الرجاء تجربة صورة أخرى.");
+        return;
+      }
+
+      setFormData((prev: any) => ({ ...prev, imageUrl: dataUrl }));
     } catch (error) {
-      console.error("Upload catch error:", error);
-      alert("حدث خطأ غير متوقع.");
+      console.error("Image processing error:", error);
+      alert("حدث خطأ أثناء معالجة الصورة.");
+    } finally {
       setIsUploading(false);
     }
   };
@@ -728,7 +756,7 @@ export default function POSPurchasesCorporate() {
                         </span>
                       ) : isUploading ? (
                         <span className="text-xs text-[#1E3A8A] font-bold animate-pulse">
-                          جاري الرفع... {uploadProgress}%
+                          جاري المعالجة...
                         </span>
                       ) : (
                         <label className="flex items-center gap-1.5 text-xs font-bold text-slate-600 cursor-pointer select-none">
