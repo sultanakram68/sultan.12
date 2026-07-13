@@ -2,21 +2,28 @@ import * as React from "react";
 import { Navbar } from "@/components/Navbar";
 import { CrowdFavorites } from "@/components/CrowdFavorites";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { RailFlyoutNav } from "@/components/shared/rail-flyout/RailFlyoutNav";
 
 /**
  * Main Official Landing Page Component (Disconnected from POS)
  */
 export default function HomePage() {
   return (
-    <main className="min-h-screen flex flex-col bg-white text-black selection:bg-black selection:text-white pb-16 md:pb-0">
-      {/* Sticky Navigation Bar */}
-      <Navbar />
+    <>
+      {/* Icon rail + contextual flyout panels (desktop only) */}
+      <RailFlyoutNav />
 
-      {/* Featured Devices Section (Real Firebase Data) */}
-      <CrowdFavorites />
+      {/* Content — padded on the inline-start (right, RTL) to clear the 64px rail on desktop */}
+      <main className="min-h-screen flex flex-col bg-white text-black selection:bg-black selection:text-white pb-16 md:pb-0 md:ps-16">
+        {/* Sticky Navigation Bar */}
+        <Navbar />
 
-      {/* Floating WhatsApp Chat Button */}
-      <WhatsAppButton />
-    </main>
+        {/* Featured Devices Section (Real Firebase Data) */}
+        <CrowdFavorites />
+
+        {/* Floating WhatsApp Chat Button */}
+        <WhatsAppButton />
+      </main>
+    </>
   );
 }

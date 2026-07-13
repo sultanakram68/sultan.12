@@ -1,23 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { Menu, X, Globe, ChevronDown, Check, Star, Layers, MapPin, User, Home, Phone, Store, Share2, HelpCircle, Instagram, Facebook, Navigation } from "lucide-react";
+import { Menu, X, Globe, ChevronDown, Check, Star, Layers, MapPin, User, Home } from "lucide-react";
 import { useLanguage, Language } from "@/context/LanguageContext";
 import { Button } from "./ui/button";
 import { useSession, signIn } from "next-auth/react";
 import { useSettings } from "@/hooks/useSettings";
-import { WheelMenu, WheelMenuItem } from "./WheelMenu";
-import { WhatsAppIcon } from "./WhatsAppIcon";
+import { NavMenu } from "./NavMenu";
 import { LiquidBottomNav } from "./LiquidBottomNav";
 
 /**
  * Navigation Bar Component
- * Mobile menu uses an infinite vertical wheel (see WheelMenu)
+ * Mobile menu is a full-screen premium overlay (see NavMenu)
  */
 export function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isLangOpen, setIsLangOpen] = React.useState(false);
-  const [linkCopied, setLinkCopied] = React.useState(false);
   const [activeBottomTab, setActiveBottomTab] = React.useState("home");
   const { language, setLanguage, t } = useLanguage();
   const { settings } = useSettings();
@@ -67,59 +65,10 @@ export function Navbar() {
     }
   };
 
-  const handleShare = async () => {
-    setIsOpen(false);
-    const shareData = { title: "lmixi", url: window.location.origin };
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch {
-        // user cancelled the share sheet — no action needed
-      }
-    } else if (typeof navigator !== "undefined" && navigator.clipboard) {
-      try {
-        await navigator.clipboard.writeText(shareData.url);
-        setLinkCopied(true);
-        setTimeout(() => setLinkCopied(false), 2000);
-      } catch {
-        // clipboard permission denied — nothing else we can do
-      }
-    }
-  };
-
-  // All wheel menu items: home + nav links + language + profile + call + order + store/faq/share/social
-  const wheelItems: WheelMenuItem[] = [
-    {
-      key: "home",
-      label: t("nav.home"),
-      icon: Home,
-      onSelect: () => goTo("#hero"),
-    },
-    ...navLinks.map((link) => ({
-      key: link.href,
-      label: link.name,
-      icon: link.icon,
-      onSelect: () => goTo(link.href),
-    })),
-    {
-      key: "store",
-      label: t("nav.store"),
-      icon: Store,
-      onSelect: () => goTo("/store"),
-    },
-    {
-      key: "faq",
-      label: t("nav.faq"),
-      icon: HelpCircle,
-      onSelect: () => goTo("#faq"),
-    },
-    {
-      key: "lang",
-      label: languages.find((l) => l.code === language)?.label || "Language",
-      icon: Globe,
-      active: isLangOpen,
-      onSelect: () => setIsLangOpen((v) => !v),
-    },
+  // The handful of high-priority actions surfaced in the bottom tab bar (mobile).
+  const bottomTabItems = [
+    { key: "home", label: t("nav.home"), icon: Home, onSelect: () => goTo("/") },
+    { key: "#crowd-favorites", label: t("nav.favorites"), icon: Star, onSelect: () => goTo("#crowd-favorites") },
     {
       key: "profile",
       label: session ? t("nav.profile") : t("nav.login"),
@@ -134,63 +83,6 @@ export function Navbar() {
         }
       },
     },
-    {
-      key: "call",
-      label: t("nav.call"),
-      icon: Phone,
-      onSelect: () => {
-        setIsOpen(false);
-        window.location.href = `tel:${settings.whatsappNumber.replace(/[^0-9+]/g, '')}`;
-      },
-    },
-    {
-      key: "share",
-      label: t("nav.share"),
-      icon: Share2,
-      onSelect: handleShare,
-    },
-    ...(settings.instagramUrl
-      ? [{
-          key: "instagram",
-          label: "Instagram",
-          icon: Instagram,
-          onSelect: () => goTo(settings.instagramUrl),
-        }]
-      : []),
-    ...(settings.facebookUrl
-      ? [{
-          key: "facebook",
-          label: "Facebook",
-          icon: Facebook,
-          onSelect: () => goTo(settings.facebookUrl),
-        }]
-      : []),
-    ...(settings.mapsUrl
-      ? [{
-          key: "maps",
-          label: t("nav.location"),
-          icon: Navigation,
-          onSelect: () => goTo(settings.mapsUrl),
-        }]
-      : []),
-    {
-      key: "order",
-      label: t("nav.order"),
-      icon: WhatsAppIcon,
-      onSelect: () => {
-        setIsOpen(false);
-        window.open("https://wa.me/905377903339", "_blank");
-      },
-    },
-  ];
-
-  const findWheelItem = (key: string) => wheelItems.find((item) => item.key === key);
-
-  // The handful of high-priority actions surfaced in the bottom tab bar (mobile).
-  const bottomTabItems = [
-    { key: "home", label: t("nav.home"), icon: Home, onSelect: () => findWheelItem("home")?.onSelect() },
-    { key: "#crowd-favorites", label: t("nav.favorites"), icon: Star, onSelect: () => findWheelItem("#crowd-favorites")?.onSelect() },
-    { key: "profile", label: session ? t("nav.profile") : t("nav.login"), icon: User, avatarUrl: session?.user?.image || undefined, onSelect: () => findWheelItem("profile")?.onSelect() },
     { key: "menu", label: t("nav.menu"), icon: Menu, onSelect: () => setIsOpen(true) },
   ];
 
@@ -201,34 +93,17 @@ export function Navbar() {
     }
   }, [isOpen, activeBottomTab]);
 
-  // Close radial menu when clicking outside
-  React.useEffect(() => {
-    if (!isOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest("[data-radial-menu]")) {
-        setIsOpen(false);
-        setIsLangOpen(false);
-      }
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, [isOpen]);
-
-  // Close on escape
+  // Close the full-screen menu on escape
   React.useEffect(() => {
     if (!isOpen) return;
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setIsOpen(false);
-        setIsLangOpen(false);
-      }
+      if (e.key === "Escape") setIsOpen(false);
     };
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen]);
 
-  // Swipe up from the right screen edge opens the radial menu (mobile)
+  // Swipe up from the right screen edge opens the mobile menu
   React.useEffect(() => {
     const edgeWidth = 28;
     const openThreshold = 40;
@@ -421,77 +296,8 @@ export function Navbar() {
       aria-hidden="true"
     />
 
-    {/* Ultra-premium infinite wheel menu (mobile) */}
-    <div className="md:hidden" data-radial-menu>
-      <WheelMenu
-        items={wheelItems}
-        isOpen={isOpen && !isLangOpen}
-        onClose={() => {
-          setIsOpen(false);
-          setIsLangOpen(false);
-        }}
-      />
-
-      {/* Link-copied confirmation toast (share fallback) */}
-      <div
-        className={`fixed bottom-8 left-1/2 -translate-x-1/2 z-[80] px-4 py-2 rounded-full bg-black text-white text-sm font-medium shadow-xl transition-all duration-300 ${
-          linkCopied ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2 pointer-events-none"
-        }`}
-      >
-        {t("nav.linkCopied")}
-      </div>
-
-      {/* Expanded Language Menu (Glassmorphism Frame) */}
-      <div
-        className="fixed bottom-0 left-0 w-full z-[70] flex flex-col gap-2 p-6 rounded-t-3xl bg-white/95 backdrop-blur-3xl border-t border-black/10 shadow-[0_-20px_40px_rgba(0,0,0,0.15)]"
-        style={{
-          transform: (isOpen && isLangOpen) ? "translateY(0%)" : "translateY(100%)",
-          opacity: (isOpen && isLangOpen) ? 1 : 0,
-          transition: "all 0.5s cubic-bezier(0.32, 0.72, 0, 1)",
-          pointerEvents: (isOpen && isLangOpen) ? "auto" : "none",
-        }}
-      >
-        <div className="flex items-center justify-between px-3 pt-1 pb-2 border-b border-black/10 mb-1">
-          <span className="text-black font-semibold text-sm flex items-center gap-2">
-            <Globe className="w-5 h-5" /> Language
-          </span>
-          <button
-            onClick={() => setIsLangOpen(false)}
-            className="text-black/60 hover:text-black hover:scale-110 transition-transform bg-black/5 hover:bg-black/10 rounded-full p-1"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-
-        {languages.map((lang) => (
-          <button
-            key={lang.code}
-            onClick={() => {
-              setLanguage(lang.code);
-            }}
-            className={`flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${
-              language === lang.code
-                ? "bg-black text-white"
-                : "text-black hover:bg-black/5"
-            }`}
-          >
-            <span>{lang.label}</span>
-            {language === lang.code && <Check className="w-4 h-4" />}
-          </button>
-        ))}
-
-        {/* OK Button */}
-        <button
-          onClick={() => {
-            setIsLangOpen(false);
-            setIsOpen(false);
-          }}
-          className="mt-1 w-full bg-black text-white font-semibold py-2 rounded-lg text-sm hover:bg-gray-800 transition-colors"
-        >
-          {t("common.ok")}
-        </button>
-      </div>
-    </div>
+    {/* Full-screen premium navigation menu (mobile) */}
+    <NavMenu isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
 }
