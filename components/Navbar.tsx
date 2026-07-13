@@ -1,13 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { Menu, X, Globe, ChevronDown, Check, Star, Layers, MapPin, User, Home } from "lucide-react";
+import { Menu, X, Globe, ChevronDown, Check, Star, Layers, MapPin, User } from "lucide-react";
 import { useLanguage, Language } from "@/context/LanguageContext";
 import { Button } from "./ui/button";
 import { useSession, signIn } from "next-auth/react";
 import { useSettings } from "@/hooks/useSettings";
 import { NavMenu } from "./NavMenu";
-import { LiquidBottomNav } from "./LiquidBottomNav";
 
 /**
  * Navigation Bar Component
@@ -16,7 +15,6 @@ import { LiquidBottomNav } from "./LiquidBottomNav";
 export function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isLangOpen, setIsLangOpen] = React.useState(false);
-  const [activeBottomTab, setActiveBottomTab] = React.useState("home");
   const { language, setLanguage, t } = useLanguage();
   const { settings } = useSettings();
   const { data: session } = useSession();
@@ -64,34 +62,6 @@ export function Navbar() {
       window.location.href = href;
     }
   };
-
-  // The handful of high-priority actions surfaced in the bottom tab bar (mobile).
-  const bottomTabItems = [
-    { key: "home", label: t("nav.home"), icon: Home, onSelect: () => goTo("/") },
-    { key: "#crowd-favorites", label: t("nav.favorites"), icon: Star, onSelect: () => goTo("#crowd-favorites") },
-    {
-      key: "profile",
-      label: session ? t("nav.profile") : t("nav.login"),
-      icon: User,
-      avatarUrl: session?.user?.image || undefined,
-      onSelect: () => {
-        setIsOpen(false);
-        if (session) {
-          window.location.href = "/profile";
-        } else {
-          signIn("google");
-        }
-      },
-    },
-    { key: "menu", label: t("nav.menu"), icon: Menu, onSelect: () => setIsOpen(true) },
-  ];
-
-  // Return the liquid bubble to "home" once the radial menu closes
-  React.useEffect(() => {
-    if (!isOpen && activeBottomTab === "menu") {
-      setActiveBottomTab("home");
-    }
-  }, [isOpen, activeBottomTab]);
 
   // Close the full-screen menu on escape
   React.useEffect(() => {
@@ -279,14 +249,6 @@ export function Navbar() {
         </div>
       </div>
     </header>
-
-    {/* Liquid morphing bottom navigation bar (mobile) — quick access to the most important actions */}
-    <LiquidBottomNav
-      items={bottomTabItems}
-      activeKey={activeBottomTab}
-      onActiveChange={setActiveBottomTab}
-      hidden={isOpen}
-    />
 
     {/* Edge swipe handle hint (mobile only, hidden while menu is open) */}
     <div

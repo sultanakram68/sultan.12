@@ -10,10 +10,10 @@ import { RailFlyoutNav } from "@/components/shared/rail-flyout/RailFlyoutNav";
 export default function HomePage() {
   return (
     <>
-      {/* Icon rail + contextual flyout panels (desktop only) */}
+      {/* Icon rail + contextual flyout panels (right rail on desktop, bottom bar on mobile) */}
       <RailFlyoutNav />
 
-      {/* Content — padded on the inline-start (right, RTL) to clear the 64px rail on desktop */}
+      {/* Content — cleared for the 64px rail: inline-start (right, RTL) on desktop, bottom bar on mobile */}
       <main className="min-h-screen flex flex-col bg-white text-black selection:bg-black selection:text-white pb-16 md:pb-0 md:ps-16">
         {/* Sticky Navigation Bar */}
         <Navbar />
