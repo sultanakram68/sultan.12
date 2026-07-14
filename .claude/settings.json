@@ -44,7 +44,18 @@
       "WebFetch(domain:www.pinterest.com)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/ --max-time 15)",
       "Bash(cat /tmp/nextdev.log 2>&1; echo \"---procs---\"; ps aux | grep -i node | grep -v grep)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(node *)",
+      "Bash(npm *)",
+      "Bash(npx *)",
+      "Bash(git *)",
+      "Bash(curl *)",
+      "Bash(cp *)",
+      "Bash(rm *)",
+      "Bash(ls *)",
+      "Bash(ls)",
+      "Bash(find *)",
+      "Bash(mkdir *)"
     ]
   }
 }
