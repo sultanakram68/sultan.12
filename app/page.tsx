@@ -6,8 +6,10 @@ import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { SiteIntro } from "@/components/SiteIntro";
 
 // اسم + أيقونة الموقع الرسمي عند الإضافة للشاشة الرئيسية (شعار LMIXI أبيض على أسود)
+// manifest بخلفية سوداء => شاشة إقلاع التطبيق سوداء (بدون برواز أبيض حول الأيقونة)
 export const metadata: Metadata = {
   title: "Lmixi",
+  manifest: "/site.webmanifest",
   appleWebApp: { capable: false, title: "Lmixi" },
   icons: {
     icon: "/lmixi-app-icon.jpg",
