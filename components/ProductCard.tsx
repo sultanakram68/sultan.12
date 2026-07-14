@@ -7,6 +7,7 @@ import { ShoppingBag, ShoppingCart, Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSettings } from "@/hooks/useSettings";
+import { useCart } from "@/context/CartContext";
 import { MenuItem } from "./CrowdFavorites";
 
 const NOTCH_TOP_RIGHT_FRAC = 0.14;
@@ -98,6 +99,7 @@ function useNotchPaths(ref: React.RefObject<HTMLDivElement>) {
 export function ProductCard({ item }: { item: MenuItem }) {
   const { t } = useLanguage();
   const { settings } = useSettings();
+  const { add, open } = useCart();
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const shapeRef = React.useRef<HTMLDivElement>(null);
   const shapePaths = useNotchPaths(shapeRef);
@@ -111,10 +113,6 @@ export function ProductCard({ item }: { item: MenuItem }) {
 
   const orderHref = `https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(
     `مرحباً، أرغب في شراء: ${item.name}`
-  )}`;
-
-  const cartHref = `https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(
-    `مرحباً، أرغب في إضافة هذا المنتج إلى طلبي: ${item.name}`
   )}`;
 
   return (
@@ -205,15 +203,18 @@ export function ProductCard({ item }: { item: MenuItem }) {
             </Button>
           </a>
 
-          <a href={cartHref} target="_blank" rel="noopener noreferrer" aria-label="أضف للسلة" className="shrink-0">
-            <Button
-              size="sm"
-              className="relative w-10 h-9 p-0 grid place-items-center bg-white text-black border border-black/25 hover:bg-black/5 active:scale-[0.98] transition-all rounded-full cursor-pointer"
-            >
-              <ShoppingCart className="w-4 h-4" />
-              <Plus className="absolute top-1 end-1.5 w-2.5 h-2.5" strokeWidth={3.5} />
-            </Button>
-          </a>
+          <Button
+            size="sm"
+            onClick={() => {
+              add({ id: item._id, name: item.name, price: item.price, imageUrl: item.imageUrl });
+              open();
+            }}
+            aria-label="أضف للسلة"
+            className="relative shrink-0 w-10 h-9 p-0 grid place-items-center bg-white text-black border border-black/25 hover:bg-black/5 active:scale-[0.98] transition-all rounded-full cursor-pointer"
+          >
+            <ShoppingCart className="w-4 h-4" />
+            <Plus className="absolute top-1 end-1.5 w-2.5 h-2.5" strokeWidth={3.5} />
+          </Button>
         </div>
       </div>
     </div>

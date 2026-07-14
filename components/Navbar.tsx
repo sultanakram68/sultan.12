@@ -7,6 +7,8 @@ import { Button } from "./ui/button";
 import { useSession, signIn } from "next-auth/react";
 import { useSettings } from "@/hooks/useSettings";
 import { NavMenu } from "./NavMenu";
+import { CartButton } from "./CartButton";
+import { CartDrawer } from "./CartDrawer";
 
 /**
  * Navigation Bar Component
@@ -216,7 +218,10 @@ export function Navbar() {
         </nav>
 
         {/* Action Button & Logo (Right Aligned) */}
-        <div className="flex items-center gap-4 justify-end flex-1">
+        <div className="flex items-center gap-2 sm:gap-4 justify-end flex-1">
+          {/* Cart (visible on mobile + desktop) */}
+          <CartButton />
+
           <div className="hidden md:flex items-center">
             <Button
               size="sm"
@@ -260,6 +265,9 @@ export function Navbar() {
 
     {/* Full-screen premium navigation menu (mobile) */}
     <NavMenu isOpen={isOpen} onClose={() => setIsOpen(false)} />
+
+    {/* Slide-in shopping cart */}
+    <CartDrawer />
     </>
   );
 }

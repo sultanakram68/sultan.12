@@ -23,6 +23,7 @@ export const viewport: Viewport = {
 };
 
 import { LanguageProvider } from "@/context/LanguageContext";
+import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/components/AuthProvider";
 
 export default function RootLayout({
@@ -41,7 +42,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-neon-dark text-white font-sans antialiased selection:bg-neon-green selection:text-neon-dark">
         <AuthProvider>
-          <LanguageProvider>{children}</LanguageProvider>
+          <LanguageProvider>
+            <CartProvider>{children}</CartProvider>
+          </LanguageProvider>
         </AuthProvider>
       </body>
     </html>
