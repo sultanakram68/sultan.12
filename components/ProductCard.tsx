@@ -201,7 +201,7 @@ export function ProductCard({ item }: { item: MenuItem }) {
             className="flex-1 min-w-0 flex items-center justify-center gap-1.5 text-white text-xs font-semibold px-3 hover:bg-white/10 transition-colors duration-200"
           >
             <ShoppingBag className="w-4 h-4 shrink-0" />
-            <span className="truncate">اشتري الآن</span>
+            <span className="truncate">{t("card.buy")}</span>
           </a>
 
           {/* Sharp diagonal notch between the two actions */}
@@ -215,7 +215,7 @@ export function ProductCard({ item }: { item: MenuItem }) {
               open();
             }}
             aria-label="أضف للسلة"
-            className="shrink-0 px-4 flex items-center text-white hover:bg-white/10 transition-colors duration-200"
+            className="shrink-0 pr-2.5 pl-3.5 flex items-center text-white hover:bg-white/10 transition-colors duration-200"
           >
             <span className="relative inline-flex">
               <ShoppingCart className="w-[18px] h-[18px]" />

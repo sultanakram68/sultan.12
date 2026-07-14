@@ -189,6 +189,13 @@ export const translations: Translations = {
     tr: "Hemen Satın Al",
     de: "Jetzt Kaufen",
   },
+  // Short "buy" label for the compact catalog-card CTA (fits all languages)
+  "card.buy": {
+    en: "Buy",
+    ar: "اشتري",
+    tr: "Satın Al",
+    de: "Kaufen",
+  },
 
   // Hero Section
   "hero.badge": {
