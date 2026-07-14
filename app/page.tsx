@@ -4,8 +4,10 @@ import { Navbar } from "@/components/Navbar";
 import { CrowdFavorites } from "@/components/CrowdFavorites";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 
-// أيقونة الموقع الرسمي فقط (شعار LMIXI أبيض على أسود) عند الإضافة للشاشة الرئيسية
+// اسم + أيقونة الموقع الرسمي عند الإضافة للشاشة الرئيسية (شعار LMIXI أبيض على أسود)
 export const metadata: Metadata = {
+  title: "Lmixi",
+  appleWebApp: { capable: true, title: "Lmixi" },
   icons: {
     icon: "/lmixi-app-icon.jpg",
     shortcut: "/lmixi-app-icon.jpg",
