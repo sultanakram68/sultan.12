@@ -6,12 +6,12 @@ import { BellOff } from "lucide-react";
 export default function NotificationsPanel() {
   return (
     <div>
-      <h2 id="flyout-panel-title" className="text-white text-lg font-semibold mb-4">الإشعارات</h2>
-      <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-        <span className="w-12 h-12 rounded-full bg-white/[0.06] grid place-items-center text-[#8A8A8A]">
-          <BellOff size={20} />
+      <h2 className="text-[#1A1A18] text-base font-semibold mb-3">الإشعارات</h2>
+      <div className="rounded-xl border border-white/50 bg-white/35 p-5 flex flex-col items-center gap-2 text-center">
+        <span className="w-10 h-10 rounded-full bg-white/50 grid place-items-center text-[#2A2A28]">
+          <BellOff size={18} />
         </span>
-        <p className="text-[#8A8A8A] text-sm">لا توجد إشعارات جديدة حالياً.</p>
+        <p className="text-[#5C5C58] text-sm">لا توجد إشعارات جديدة حالياً.</p>
       </div>
     </div>
   );

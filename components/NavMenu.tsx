@@ -1,200 +1,104 @@
 "use client";
 
 import * as React from "react";
-import { X, User } from "lucide-react";
+import { X } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { useSession, signIn, signOut } from "next-auth/react";
-import { useLanguage, Language } from "@/context/LanguageContext";
-import { useSettings } from "@/hooks/useSettings";
+import { railItems } from "@/components/shared/rail-flyout/rail.config";
+import { useRailFlyoutState } from "@/components/shared/rail-flyout/useRailFlyoutState";
 
-interface NavMenuItem {
-  key: string;
-  label: string;
-  /** Real navigation. Omit for not-yet-built features — those show a "coming soon" toast instead. */
-  onSelect?: () => void;
+/** Placeholder while a panel lazily loads (keeps roughly the panel's footprint). */
+function PanelSkeleton() {
+  return (
+    <div className="space-y-2 animate-pulse pt-1">
+      <div className="h-5 w-24 rounded bg-black/10" />
+      <div className="h-14 rounded-xl bg-black/[0.06]" />
+      <div className="h-14 rounded-xl bg-black/[0.06]" />
+    </div>
+  );
 }
 
-const LANGUAGES: { code: Language; label: string }[] = [
-  { code: "ar", label: "العربية" },
-  { code: "en", label: "English" },
-  { code: "tr", label: "Türkçe" },
-  { code: "de", label: "Deutsch" },
-];
-
 /**
- * Full-screen premium navigation overlay (design brief: Apple/Linear/Arc-tier,
- * strictly white/black/gray palette, no sidebar). Replaces the old radial
- * WheelMenu. Mobile only — the desktop header keeps its own inline nav.
+ * Full-screen navigation overlay (mobile only). The menu IS the Rail + Flyout:
+ * a thin icon rail on the right (RTL) with a glass panel filling the rest.
+ * The panel is always open — it starts on "Profile" and never closes; tapping
+ * a different icon cross-fades the inner content only.
  */
 export function NavMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const reduceMotion = useReducedMotion();
-  const { language, setLanguage } = useLanguage();
-  const { data: session } = useSession();
-  const { settings } = useSettings();
-  const [toast, setToast] = React.useState<string | null>(null);
-  const isRTL = language === "ar";
-
-  const goTo = (href: string) => {
-    onClose();
-    if (href.startsWith("#")) {
-      document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
-    } else if (href.startsWith("http")) {
-      window.open(href, "_blank");
-    } else {
-      window.location.href = href;
-    }
-  };
-
-  const comingSoon = (label: string) => {
-    setToast(`${label} — قريباً`);
-    window.setTimeout(() => setToast(null), 1800);
-  };
-
-  const items: NavMenuItem[] = [
-    { key: "home", label: "الرئيسية", onSelect: () => goTo("/") },
-    { key: "categories", label: "الأقسام", onSelect: () => goTo("/store") },
-    { key: "products", label: "المنتجات", onSelect: () => goTo("#crowd-favorites") },
-    { key: "offers", label: "العروض", onSelect: () => goTo("#crowd-favorites") },
-    { key: "favorites", label: "المفضلة" },
-    { key: "orders", label: "طلباتي" },
-    { key: "notifications", label: "الإشعارات" },
-    {
-      key: "support",
-      label: "الدعم الفني",
-      onSelect: () => goTo(`https://wa.me/${settings.whatsappNumber.replace(/[^0-9]/g, "")}`),
-    },
-    { key: "settings", label: "الإعدادات", onSelect: () => goTo("/profile") },
-  ];
-
-  const handleSelect = (item: NavMenuItem) => {
-    if (item.onSelect) item.onSelect();
-    else comingSoon(item.label);
-  };
+  const { activeId, selectItem } = useRailFlyoutState();
+  const ActivePanel = railItems.find((i) => i.id === activeId)?.panelComponent;
 
   return (
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="md:hidden fixed inset-0 z-[100] bg-white/95 backdrop-blur-2xl flex flex-col"
+          dir="rtl"
+          className="md:hidden fixed inset-0 z-[100] flex flex-col"
+          style={{ background: "linear-gradient(135deg, #E8E6DD, #D8D4C8)" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: reduceMotion ? 0.15 : 0.4, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: reduceMotion ? 0.15 : 0.35, ease: [0.22, 1, 0.36, 1] }}
         >
-          <motion.div
-            className="relative flex items-center justify-between px-6 pb-4"
-            style={{ paddingTop: "calc(env(safe-area-inset-top) + 20px)" }}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: reduceMotion ? 0 : 0.05, duration: 0.35 }}
+          {/* Header: logo + close */}
+          <div
+            className="relative flex items-center justify-between px-5 pb-3"
+            style={{ paddingTop: "calc(env(safe-area-inset-top) + 18px)" }}
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/lmixi-logo-icon.png" alt="LMIXI" className="h-7 w-auto object-contain" />
             <button
               onClick={onClose}
               aria-label="إغلاق القائمة"
-              className="w-11 h-11 rounded-full bg-[#EAEAEA] text-[#111111] flex items-center justify-center hover:bg-[#111111] hover:text-white transition-colors duration-300 active:scale-95"
+              className="w-11 h-11 rounded-full bg-white/50 text-[#2A2A28] flex items-center justify-center hover:bg-white/70 transition-colors duration-300 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-black/20"
             >
               <X className="w-5 h-5" />
             </button>
-          </motion.div>
+          </div>
 
-          <nav className="flex-1 overflow-y-auto px-6 flex flex-col justify-center gap-0.5" role="menu">
-            {items.map((item, i) => (
-              <motion.button
-                key={item.key}
-                role="menuitem"
-                onClick={() => handleSelect(item)}
-                className="group relative flex items-center gap-4 py-3.5 text-right w-fit"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  delay: reduceMotion ? 0 : 0.1 + i * 0.045,
-                  duration: reduceMotion ? 0.15 : 0.5,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-              >
-                <span
-                  className={`text-3xl sm:text-4xl font-semibold text-[#111111] transition-transform duration-300 ease-out motion-reduce:transition-none ${
-                    isRTL ? "group-hover:-translate-x-2 group-active:-translate-x-1" : "group-hover:translate-x-2 group-active:translate-x-1"
-                  }`}
-                >
-                  {item.label}
-                </span>
-                <span className="h-px bg-[#111111] w-0 group-hover:w-8 transition-all duration-300 ease-out motion-reduce:hidden" />
-              </motion.button>
-            ))}
-          </nav>
-
-          <motion.div
-            className="px-6 pt-4 space-y-4 border-t border-[#EAEAEA]"
-            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 24px)" }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: reduceMotion ? 0 : 0.4, duration: 0.4 }}
+          {/* Body: rail (right) + always-visible glass panel (fills) */}
+          <div
+            className="flex-1 min-h-0 flex gap-[10px] px-4 pt-1"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
           >
-            {/* Account */}
-            <button
-              onClick={() => {
-                onClose();
-                if (session) window.location.href = "/profile";
-                else signIn("google");
-              }}
-              className="flex items-center gap-3 w-full text-right"
+            <nav
+              aria-label="القائمة السريعة"
+              className="limixi-glass rounded-2xl flex flex-col items-center gap-1.5 py-3 w-14 shrink-0"
             >
-              {session?.user?.image ? (
-                <img src={session.user.image} alt="" className="w-11 h-11 rounded-full object-cover border border-[#EAEAEA]" />
-              ) : (
-                <span className="w-11 h-11 rounded-full bg-[#EAEAEA] flex items-center justify-center text-[#707070]">
-                  <User className="w-5 h-5" />
-                </span>
-              )}
-              <span className="flex flex-col">
-                <span className="text-sm font-semibold text-[#111111]">
-                  {session?.user?.name || "تسجيل الدخول"}
-                </span>
-                {session?.user?.email && <span className="text-xs text-[#707070]">{session.user.email}</span>}
-              </span>
-            </button>
+              {railItems.map((item) => {
+                const active = item.id === activeId;
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => selectItem(item.id)}
+                    aria-pressed={active}
+                    aria-label={item.label}
+                    className="grid place-items-center w-9 h-9 rounded-full transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-black/20"
+                    style={{ background: active ? "rgba(255,255,255,0.5)" : "transparent", color: "#2A2A28" }}
+                  >
+                    <Icon size={18} />
+                  </button>
+                );
+              })}
+            </nav>
 
-            {/* Language */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {LANGUAGES.map((lang) => (
-                <button
-                  key={lang.code}
-                  onClick={() => setLanguage(lang.code)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors duration-300 ${
-                    language === lang.code ? "bg-[#111111] text-white" : "bg-[#EAEAEA] text-[#2F2F2F] hover:bg-[#dedede]"
-                  }`}
+            <div className="limixi-glass rounded-2xl flex-1 min-w-0 overflow-y-auto p-4">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeId}
+                  role="region"
+                  aria-live="polite"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  {lang.label}
-                </button>
-              ))}
+                  <React.Suspense fallback={<PanelSkeleton />}>{ActivePanel && <ActivePanel />}</React.Suspense>
+                </motion.div>
+              </AnimatePresence>
             </div>
-
-            {/* Country + logout */}
-            <div className="flex items-center justify-between text-xs text-[#707070]">
-              <span>تركيا</span>
-              {session && (
-                <button onClick={() => signOut()} className="font-semibold text-[#2F2F2F] hover:text-[#111111] transition-colors">
-                  تسجيل الخروج
-                </button>
-              )}
-            </div>
-          </motion.div>
-
-          {/* "Coming soon" toast for not-yet-built items */}
-          <AnimatePresence>
-            {toast && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                className="absolute left-1/2 -translate-x-1/2 bottom-28 px-4 py-2 rounded-full bg-[#111111] text-white text-sm font-medium shadow-lg"
-              >
-                {toast}
-              </motion.div>
-            )}
-          </AnimatePresence>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

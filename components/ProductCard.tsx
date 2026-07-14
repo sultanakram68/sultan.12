@@ -114,7 +114,7 @@ export function ProductCard({ item }: { item: MenuItem }) {
   )}`;
 
   return (
-    <div className="group relative pt-8">
+    <div className="group relative pt-8 w-[75%] mx-auto sm:w-full sm:mx-0">
       {/* Signature shape layer, kept separate from the image so its clip-path
           doesn't mask the breakout product photo. filter:drop-shadow (not
           box-shadow) because box-shadow gets cut off by clip-path. */}
@@ -144,7 +144,7 @@ export function ProductCard({ item }: { item: MenuItem }) {
         className="relative block rounded-limixi-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black"
       >
         {/* Breakout stage */}
-        <div className="relative w-full aspect-[4/5] flex items-end justify-center px-6 pb-4">
+        <div className="relative w-full aspect-[4/6] flex items-end justify-center px-6 pb-4">
           {!imageLoaded && item.imageUrl && (
             <div className="absolute inset-x-10 bottom-4 top-10 rounded-3xl bg-black/5 animate-pulse" aria-hidden="true" />
           )}

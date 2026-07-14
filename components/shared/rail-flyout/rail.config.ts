@@ -1,21 +1,21 @@
 import { lazy, type ComponentType, type LazyExoticComponent } from "react";
-import { Globe, User, Bell, LifeBuoy, type LucideIcon } from "lucide-react";
+import { User, Bell, Settings, Globe, Info, type LucideIcon } from "lucide-react";
 
 /**
- * Component Registry for the rail. Each icon "points to" its own lazily-loaded
- * panel component — adding a new module later is one entry here plus a new
- * panel file, with zero edits to the rail/panel machinery (Open/Closed).
+ * Component Registry. Order is fixed by priority — append new units at the
+ * end, never reorder existing ones. Each panel is lazily loaded.
  */
 export interface RailItem {
   id: string;
   icon: LucideIcon;
-  labelAr: string;
-  panel: LazyExoticComponent<ComponentType>;
+  label: string;
+  panelComponent: LazyExoticComponent<ComponentType>;
 }
 
 export const railItems: RailItem[] = [
-  { id: "language", icon: Globe, labelAr: "اللغة", panel: lazy(() => import("./panels/LanguagePanel")) },
-  { id: "account", icon: User, labelAr: "الحساب", panel: lazy(() => import("./panels/AccountPanel")) },
-  { id: "notifications", icon: Bell, labelAr: "الإشعارات", panel: lazy(() => import("./panels/NotificationsPanel")) },
-  { id: "help", icon: LifeBuoy, labelAr: "المساعدة", panel: lazy(() => import("./panels/HelpPanel")) },
+  { id: "profile", icon: User, label: "الحساب", panelComponent: lazy(() => import("./panels/ProfilePanel")) },
+  { id: "notifications", icon: Bell, label: "الإشعارات", panelComponent: lazy(() => import("./panels/NotificationsPanel")) },
+  { id: "settings", icon: Settings, label: "الإعدادات", panelComponent: lazy(() => import("./panels/SettingsPanel")) },
+  { id: "language", icon: Globe, label: "اللغة", panelComponent: lazy(() => import("./panels/LanguagePanel")) },
+  { id: "developer", icon: Info, label: "عن المطوّر", panelComponent: lazy(() => import("./panels/DeveloperPanel")) },
 ];

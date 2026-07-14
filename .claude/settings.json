@@ -38,7 +38,13 @@
       "Bash(git ls-tree *)",
       "Bash(git check-ignore *)",
       "Bash(echo \"EXIT: $?\")",
-      "Bash(git filter-repo *)"
+      "Bash(git filter-repo *)",
+      "WebFetch(domain:pin.it)",
+      "WebFetch(domain:api.pinterest.com)",
+      "WebFetch(domain:www.pinterest.com)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3000/ --max-time 15)",
+      "Bash(cat /tmp/nextdev.log 2>&1; echo \"---procs---\"; ps aux | grep -i node | grep -v grep)",
+      "Read(//tmp/**)"
     ]
   }
 }
