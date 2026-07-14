@@ -3,7 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, ShoppingCart, Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSettings } from "@/hooks/useSettings";
@@ -113,8 +113,12 @@ export function ProductCard({ item }: { item: MenuItem }) {
     `مرحباً، أرغب في شراء: ${item.name}`
   )}`;
 
+  const cartHref = `https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(
+    `مرحباً، أرغب في إضافة هذا المنتج إلى طلبي: ${item.name}`
+  )}`;
+
   return (
-    <div className="group relative pt-8 w-[75%] mx-auto sm:w-full sm:mx-0">
+    <div className="group relative pt-8">
       {/* Signature shape layer, kept separate from the image so its clip-path
           doesn't mask the breakout product photo. filter:drop-shadow (not
           box-shadow) because box-shadow gets cut off by clip-path. */}
@@ -165,21 +169,6 @@ export function ProductCard({ item }: { item: MenuItem }) {
           ) : (
             <div className="relative z-10 text-black/50 text-xs">No Image Available</div>
           )}
-
-          {/* Floating quick-order button (a <button>, not <a> — sits inside the outer
-              <Link>, and nesting an anchor inside an anchor breaks hydration) */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              window.open(orderHref, "_blank", "noopener,noreferrer");
-            }}
-            aria-label={t("nav.order")}
-            className="absolute bottom-0 end-4 translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black text-white flex items-center justify-center shadow-lg border-4 border-white hover:scale-105 active:scale-95 transition-transform duration-300 motion-reduce:transition-none motion-reduce:transform-none"
-          >
-            <ShoppingBag className="w-4 h-4" />
-          </button>
         </div>
 
         {/* Text content, sitting inside the shape's visual bounds */}
@@ -204,21 +193,28 @@ export function ProductCard({ item }: { item: MenuItem }) {
           )}
         </div>
 
-        {/* Always visible on mobile; reveals on hover/focus on desktop so the stage stays uncluttered */}
-        <a
-          href={orderHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full opacity-100 translate-y-0 md:opacity-0 md:translate-y-2 md:pointer-events-none group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-300 ease-out motion-reduce:transition-none motion-reduce:transform-none"
-        >
-          <Button
-            size="sm"
-            className="w-full gap-2 bg-black text-white hover:bg-black/85 active:scale-[0.98] transition-all font-semibold rounded-full cursor-pointer"
-          >
-            <ShoppingBag className="w-4 h-4" />
-            <span>{t("nav.order")}</span>
-          </Button>
-        </a>
+        {/* Buy now (text) + Add-to-cart (icon only, with a +), same B/W style */}
+        <div className="flex items-center gap-2">
+          <a href={orderHref} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-0">
+            <Button
+              size="sm"
+              className="w-full gap-1.5 bg-black text-white hover:bg-black/85 active:scale-[0.98] transition-all font-semibold rounded-full cursor-pointer text-xs px-2"
+            >
+              <ShoppingBag className="w-4 h-4 shrink-0" />
+              <span className="truncate">اشتري الآن</span>
+            </Button>
+          </a>
+
+          <a href={cartHref} target="_blank" rel="noopener noreferrer" aria-label="أضف للسلة" className="shrink-0">
+            <Button
+              size="sm"
+              className="relative w-10 h-9 p-0 grid place-items-center bg-white text-black border border-black/25 hover:bg-black/5 active:scale-[0.98] transition-all rounded-full cursor-pointer"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <Plus className="absolute top-1 end-1.5 w-2.5 h-2.5" strokeWidth={3.5} />
+            </Button>
+          </a>
+        </div>
       </div>
     </div>
   );

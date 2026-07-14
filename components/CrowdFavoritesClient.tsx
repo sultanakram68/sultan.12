@@ -69,7 +69,7 @@ export function CrowdFavoritesClient({ favorites }: CrowdFavoritesClientProps) {
             <p className="text-[#342E37]/70 text-lg font-medium">لم يتم إضافة منتجات في المتجر بعد - سيتم تحديث القائمة قريباً...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8">
             {items.map((item) => (
               <ProductCard key={item._id} item={item} />
             ))}
