@@ -1,7 +1,17 @@
 import * as React from "react";
+import type { Metadata } from "next";
 import { Navbar } from "@/components/Navbar";
 import { CrowdFavorites } from "@/components/CrowdFavorites";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+
+// أيقونة الموقع الرسمي فقط (شعار LMIXI أبيض على أسود) عند الإضافة للشاشة الرئيسية
+export const metadata: Metadata = {
+  icons: {
+    icon: "/lmixi-app-icon.jpg",
+    shortcut: "/lmixi-app-icon.jpg",
+    apple: "/lmixi-app-icon.jpg",
+  },
+};
 
 /**
  * Main Official Landing Page Component (Disconnected from POS)
