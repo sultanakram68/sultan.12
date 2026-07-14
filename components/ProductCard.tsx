@@ -4,7 +4,6 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ShoppingBag, ShoppingCart, Plus } from "lucide-react";
-import { Button } from "./ui/button";
 import { useLanguage } from "@/context/LanguageContext";
 import { useSettings } from "@/hooks/useSettings";
 import { useCart } from "@/context/CartContext";
@@ -191,32 +190,38 @@ export function ProductCard({ item }: { item: MenuItem }) {
           )}
         </div>
 
-        {/* Buy now (text) + Add-to-cart (icon only, with a +), same B/W style */}
-        <div className="flex items-center gap-2">
-          <a href={orderHref} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-0">
-            <Button
-              size="sm"
-              className="w-full gap-1.5 bg-black text-white hover:bg-black/85 active:scale-[0.98] transition-all font-semibold rounded-full cursor-pointer text-xs px-2"
-            >
-              <ShoppingBag className="w-4 h-4 shrink-0" />
-              <span className="truncate">اشتري الآن</span>
-            </Button>
+        {/* One black pill split in the middle by a sharp diagonal notch — echoes
+            the LIMIXI card silhouette. Buy-now (wide) + add-to-cart (icon). */}
+        <div className="flex items-stretch h-10 w-full rounded-full bg-black overflow-hidden">
+          {/* Buy now — RTL first, so it sits on the right */}
+          <a
+            href={orderHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 min-w-0 flex items-center justify-center gap-1.5 text-white text-xs font-semibold px-3 hover:bg-white/10 transition-colors duration-200"
+          >
+            <ShoppingBag className="w-4 h-4 shrink-0" />
+            <span className="truncate">اشتري الآن</span>
           </a>
 
-          <Button
-            size="sm"
+          {/* Sharp diagonal notch between the two actions */}
+          <span aria-hidden="true" className="w-[5px] shrink-0 bg-white -skew-x-[16deg]" />
+
+          {/* Add to cart — RTL second, so it sits on the left */}
+          <button
+            type="button"
             onClick={() => {
               add({ id: item._id, name: item.name, price: item.price, imageUrl: item.imageUrl });
               open();
             }}
             aria-label="أضف للسلة"
-            className="shrink-0 h-9 px-3.5 grid place-items-center bg-black text-white hover:bg-black/85 active:scale-[0.98] transition-all rounded-full cursor-pointer"
+            className="shrink-0 px-4 flex items-center text-white hover:bg-white/10 transition-colors duration-200"
           >
-            <span className="relative grid place-items-center">
-              <ShoppingCart className="w-4 h-4" />
-              <Plus className="absolute -top-1.5 -end-2 w-2.5 h-2.5" strokeWidth={3.5} />
+            <span className="relative inline-flex">
+              <ShoppingCart className="w-[18px] h-[18px]" />
+              <Plus className="absolute -top-1 -right-1.5 w-2.5 h-2.5" strokeWidth={4} />
             </span>
-          </Button>
+          </button>
         </div>
       </div>
     </div>
