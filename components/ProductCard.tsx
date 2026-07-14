@@ -210,10 +210,12 @@ export function ProductCard({ item }: { item: MenuItem }) {
               open();
             }}
             aria-label="أضف للسلة"
-            className="relative shrink-0 w-10 h-9 p-0 grid place-items-center bg-white text-black border border-black/25 hover:bg-black/5 active:scale-[0.98] transition-all rounded-full cursor-pointer"
+            className="shrink-0 h-9 px-3.5 grid place-items-center bg-black text-white hover:bg-black/85 active:scale-[0.98] transition-all rounded-full cursor-pointer"
           >
-            <ShoppingCart className="w-4 h-4" />
-            <Plus className="absolute top-1 end-1.5 w-2.5 h-2.5" strokeWidth={3.5} />
+            <span className="relative grid place-items-center">
+              <ShoppingCart className="w-4 h-4" />
+              <Plus className="absolute -top-1.5 -end-2 w-2.5 h-2.5" strokeWidth={3.5} />
+            </span>
           </Button>
         </div>
       </div>
