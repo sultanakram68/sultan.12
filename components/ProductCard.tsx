@@ -158,7 +158,7 @@ export function ProductCard({ item }: { item: MenuItem }) {
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                 onLoad={() => setImageLoaded(true)}
-                className={`relative z-10 object-contain object-bottom translate-y-[10%] scale-[0.85] drop-shadow-xl transition-transform duration-500 ease-out group-hover:scale-90 motion-reduce:transition-none motion-reduce:transform-none ${
+                className={`relative z-10 object-contain object-bottom translate-y-[5%] scale-[0.9] drop-shadow-xl transition-transform duration-500 ease-out group-hover:scale-95 motion-reduce:transition-none motion-reduce:transform-none ${
                   imageLoaded ? "opacity-100" : "opacity-0"
                 }`}
               />
