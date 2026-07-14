@@ -1,5 +1,5 @@
 import * as React from "react";
-import { safeFetch, MOCK_CROWD_FAVORITES } from "@/sanity/lib/client";
+import { safeFetch } from "@/sanity/lib/client";
 import { CROWD_FAVORITES_QUERY } from "@/sanity/lib/queries";
 import { CrowdFavoritesClient } from "./CrowdFavoritesClient";
 
@@ -17,9 +17,10 @@ export interface MenuItem {
  * Featured Devices & Accessories Section (Server Component fetching data)
  */
 export async function CrowdFavorites() {
+  // لا صور منتجات وهمية: fallback فاضي، المنتجات الحقيقية بس من Firebase
   const favorites: MenuItem[] = await safeFetch<MenuItem[]>(
     CROWD_FAVORITES_QUERY,
-    MOCK_CROWD_FAVORITES
+    []
   );
 
   return <CrowdFavoritesClient favorites={favorites} />;

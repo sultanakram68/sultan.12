@@ -3,11 +3,12 @@ import type { Metadata } from "next";
 import { Navbar } from "@/components/Navbar";
 import { CrowdFavorites } from "@/components/CrowdFavorites";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { SiteIntro } from "@/components/SiteIntro";
 
 // اسم + أيقونة الموقع الرسمي عند الإضافة للشاشة الرئيسية (شعار LMIXI أبيض على أسود)
 export const metadata: Metadata = {
   title: "Lmixi",
-  appleWebApp: { capable: true, title: "Lmixi" },
+  appleWebApp: { capable: false, title: "Lmixi" },
   icons: {
     icon: "/lmixi-app-icon.jpg",
     shortcut: "/lmixi-app-icon.jpg",
@@ -21,6 +22,9 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <main className="min-h-screen flex flex-col bg-white text-black selection:bg-black selection:text-white pb-16 md:pb-0">
+      {/* Cinematic opening intro (logo only, ~3s) */}
+      <SiteIntro />
+
       {/* Sticky Navigation Bar */}
       <Navbar />
 
