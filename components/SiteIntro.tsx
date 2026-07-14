@@ -4,20 +4,21 @@ import * as React from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
 /**
- * Cinematic opening intro (official website only) — logo only, no text.
- * A black curtain: concentric rings pulse outward from the LIMIXI mark over
- * a breathing glow; the mark springs in and keeps a soft heartbeat. After
- * ~3s the whole curtain punches in, blurs and fades to reveal the site.
+ * Ultra-minimal premium opening intro (official website only).
+ * Pure white stage. The black LIMIXI mark grows from a point at the center
+ * via a smooth circular clip-reveal, holds, shows "Loading…" with a gentle
+ * dot sequence, then scales up 2% and fades into the app. ~3s total.
  *
- * Decorative (fixed duration). Locks scroll while visible and fully respects
- * prefers-reduced-motion.
+ * Palette strictly #000/#fff. No rotation, no glow, no particles. Fully
+ * respects prefers-reduced-motion. (True vector self-drawing needs an SVG
+ * source; with the raster mark this clip-reveal captures the same spirit.)
  */
 export function SiteIntro() {
   const reduceMotion = useReducedMotion();
   const [show, setShow] = React.useState(true);
 
   React.useEffect(() => {
-    const t = window.setTimeout(() => setShow(false), reduceMotion ? 600 : 2700);
+    const t = window.setTimeout(() => setShow(false), reduceMotion ? 500 : 2650);
     return () => window.clearTimeout(t);
   }, [reduceMotion]);
 
@@ -30,59 +31,66 @@ export function SiteIntro() {
     };
   }, [show]);
 
-  const rings = [0, 0.55, 1.1]; // staggered emanating pulses
-
   return (
     <AnimatePresence>
       {show && (
         <motion.div
-          className="fixed inset-0 z-[200] bg-black flex items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[200] bg-white flex flex-col items-center justify-center"
           initial={{ opacity: 1 }}
-          exit={{ opacity: 0, scale: 1.12, filter: "blur(10px)" }}
-          transition={{ duration: 0.8, ease: [0.65, 0, 0.35, 1] }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
         >
-          {/* Breathing radial glow */}
+          {/* Black mark — multiply drops the JPEG's white bg cleanly onto white */}
+          <motion.img
+            src="/lmixi-mark-black.jpg"
+            alt="LIMIXI"
+            className="w-32 h-32 object-contain select-none"
+            style={{ mixBlendMode: "multiply" }}
+            draggable={false}
+            initial={
+              reduceMotion
+                ? { opacity: 0 }
+                : { opacity: 0, scale: 0.9, clipPath: "circle(0% at 50% 50%)" }
+            }
+            animate={
+              reduceMotion
+                ? { opacity: 1 }
+                : { opacity: 1, scale: [0.9, 1, 1.02], clipPath: "circle(72% at 50% 50%)" }
+            }
+            transition={
+              reduceMotion
+                ? { duration: 0.3 }
+                : {
+                    duration: 1.15,
+                    ease: [0.22, 1, 0.36, 1],
+                    scale: { duration: 2.6, times: [0, 0.45, 1], ease: [0.4, 0, 0.2, 1] },
+                  }
+            }
+          />
+
+          {/* Loading… with a gentle fade sequence on the dots */}
           {!reduceMotion && (
             <motion.div
-              aria-hidden="true"
-              className="absolute w-[380px] h-[380px] rounded-full"
-              style={{ background: "radial-gradient(circle, rgba(255,255,255,0.18), rgba(255,255,255,0) 70%)" }}
-              initial={{ opacity: 0, scale: 0.75 }}
-              animate={{ opacity: [0, 1, 0.65, 0.85], scale: [0.75, 1.15, 1, 1.1] }}
-              transition={{ duration: 2.7, ease: "easeInOut" }}
-            />
+              className="mt-9 flex items-center text-black/45 text-xs font-light"
+              style={{ letterSpacing: "0.18em" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1, duration: 0.5 }}
+            >
+              <span>Loading</span>
+              <span className="flex">
+                {[0, 1, 2].map((i) => (
+                  <motion.span
+                    key={i}
+                    animate={{ opacity: [0.15, 1, 0.15] }}
+                    transition={{ duration: 1.2, repeat: Infinity, delay: 1 + i * 0.22, ease: "easeInOut" }}
+                  >
+                    .
+                  </motion.span>
+                ))}
+              </span>
+            </motion.div>
           )}
-
-          {/* Concentric rings emanating outward, continuously */}
-          {!reduceMotion &&
-            rings.map((delay, i) => (
-              <motion.div
-                key={i}
-                aria-hidden="true"
-                className="absolute rounded-full border border-white/25"
-                style={{ width: 200, height: 200 }}
-                initial={{ scale: 0.35, opacity: 0 }}
-                animate={{ scale: [0.35, 2.4], opacity: [0, 0.6, 0] }}
-                transition={{ duration: 2.2, ease: "easeOut", repeat: Infinity, delay }}
-              />
-            ))}
-
-          {/* Logo mark — springs in, then a soft heartbeat */}
-          <motion.div
-            className="relative"
-            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
-            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
-            transition={{ type: reduceMotion ? "tween" : "spring", stiffness: 140, damping: 12, duration: reduceMotion ? 0.4 : undefined }}
-          >
-            <motion.img
-              src="/lmixi-app-icon.jpg"
-              alt="LIMIXI"
-              className="w-36 h-36 object-contain select-none drop-shadow-[0_0_30px_rgba(255,255,255,0.25)]"
-              draggable={false}
-              animate={reduceMotion ? undefined : { scale: [1, 1.06, 1] }}
-              transition={reduceMotion ? undefined : { duration: 1.6, ease: "easeInOut", repeat: Infinity, delay: 0.9 }}
-            />
-          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

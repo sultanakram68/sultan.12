@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <main className="min-h-screen flex flex-col bg-white text-black selection:bg-black selection:text-white pb-16 md:pb-0">
-      {/* Cinematic opening intro (logo only, ~3s) */}
+      {/* Premium opening intro (~3s, official site only) */}
       <SiteIntro />
 
       {/* Sticky Navigation Bar */}
