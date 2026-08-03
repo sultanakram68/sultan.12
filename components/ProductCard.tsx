@@ -136,7 +136,9 @@ export function ProductCard({ item }: { item: MenuItem }) {
             inset: NOTCH_BORDER,
             clipPath: shapePaths ? `path("${shapePaths.inner}")` : undefined,
             borderRadius: shapePaths ? 0 : 26,
-            background: "rgba(0, 209, 255, 0.16)",
+            // Light neon-blue frosted glass — opaque enough to hide the black
+            // backing layer so it reads as a bright neon blue, not dark teal.
+            background: "rgba(198, 240, 255, 0.94)",
           }}
         />
       </div>
