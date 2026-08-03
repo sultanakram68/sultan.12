@@ -122,20 +122,21 @@ export function ProductCard({ item }: { item: MenuItem }) {
       <div
         ref={shapeRef}
         className="absolute inset-x-0 bottom-0 top-[13%] transition-transform duration-300 ease-out group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:transform-none"
-        style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,.15)) drop-shadow(0 4px 12px rgba(0,0,0,.08))" }}
+        style={{ filter: "drop-shadow(0 0 14px rgba(0,209,255,.35)) drop-shadow(0 18px 38px rgba(0,0,0,.12)) drop-shadow(0 4px 12px rgba(0,0,0,.06))" }}
         aria-hidden="true"
       >
-        {/* Outer layer = the thin black outline, showing only as a rim around the inner white fill */}
+        {/* Outer layer = the thin black outline, showing only as a rim around the inner neon-blue fill */}
         <div
           className="limixi-card-shape absolute inset-0 bg-black"
           style={shapePaths ? { clipPath: `path("${shapePaths.outer}")`, borderRadius: 0, border: "none" } : undefined}
         />
         <div
-          className="absolute bg-white"
+          className="absolute backdrop-blur-md"
           style={{
             inset: NOTCH_BORDER,
             clipPath: shapePaths ? `path("${shapePaths.inner}")` : undefined,
             borderRadius: shapePaths ? 0 : 26,
+            background: "rgba(0, 209, 255, 0.16)",
           }}
         />
       </div>

@@ -1,6 +1,4 @@
 import * as React from "react";
-import { safeFetch } from "@/sanity/lib/client";
-import { CROWD_FAVORITES_QUERY } from "@/sanity/lib/queries";
 import { CrowdFavoritesClient } from "./CrowdFavoritesClient";
 
 export interface MenuItem {
@@ -14,14 +12,12 @@ export interface MenuItem {
 }
 
 /**
- * Featured Devices & Accessories Section (Server Component fetching data)
+ * Featured Devices & Accessories. Products stream in live on the client via
+ * Firebase onSnapshot (see CrowdFavoritesClient) — we intentionally do NOT
+ * prefetch them on the server, because the images are stored as large base64
+ * data URIs in Firestore and embedding them into the SSR HTML blows up build
+ * memory and bloats the payload.
  */
-export async function CrowdFavorites() {
-  // لا صور منتجات وهمية: fallback فاضي، المنتجات الحقيقية بس من Firebase
-  const favorites: MenuItem[] = await safeFetch<MenuItem[]>(
-    CROWD_FAVORITES_QUERY,
-    []
-  );
-
-  return <CrowdFavoritesClient favorites={favorites} />;
+export function CrowdFavorites() {
+  return <CrowdFavoritesClient favorites={[]} />;
 }
