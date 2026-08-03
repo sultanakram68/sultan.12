@@ -3,7 +3,7 @@
 import { UserCog, Store, LifeBuoy } from "lucide-react";
 import { useSettings } from "@/hooks/useSettings";
 
-const CARD = "rounded-xl border border-white/50 bg-white/35 p-3 mb-2 flex items-center gap-2 text-sm text-[#5C5C58] hover:bg-white/45 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-black/20";
+const CARD = "rounded-xl border border-white/30 bg-transparent p-3 mb-2 flex items-center gap-2 text-sm text-[#5C5C58] hover:bg-white/45 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-black/20";
 
 /** Flyout panel: quick settings / shortcuts (links to real destinations). */
 export default function SettingsPanel() {

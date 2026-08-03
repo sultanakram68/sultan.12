@@ -3,7 +3,7 @@
 import { Sparkles, MessageCircle } from "lucide-react";
 import { useSettings } from "@/hooks/useSettings";
 
-const CARD = "rounded-xl border border-white/50 bg-white/35 p-3 mb-2";
+const CARD = "rounded-xl border border-white/30 bg-transparent p-3 mb-2";
 
 /** Flyout panel: about the app / developer + a contact channel. */
 export default function DeveloperPanel() {

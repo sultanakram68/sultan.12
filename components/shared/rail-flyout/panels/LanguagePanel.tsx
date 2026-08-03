@@ -24,7 +24,7 @@ export default function LanguagePanel() {
             onClick={() => setLanguage(l.code)}
             aria-pressed={active}
             className={`w-full text-right rounded-xl border p-3 mb-2 text-sm flex items-center justify-between transition-colors outline-none focus-visible:ring-2 focus-visible:ring-black/20 ${
-              active ? "bg-white/55 border-white/70 text-[#1A1A18] font-semibold" : "bg-white/35 border-white/50 text-[#5C5C58] hover:bg-white/45"
+              active ? "bg-white/55 border-white/70 text-[#1A1A18] font-semibold" : "bg-transparent border-white/30 text-[#3A3A38] hover:bg-white/20"
             }`}
           >
             <span>{l.label}</span>

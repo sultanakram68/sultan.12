@@ -33,8 +33,7 @@ export function NavMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
       {isOpen && (
         <motion.div
           dir="rtl"
-          className="md:hidden fixed inset-0 z-[100] flex flex-col"
-          style={{ background: "linear-gradient(135deg, #E8E6DD, #D8D4C8)" }}
+          className="md:hidden fixed inset-0 z-[100] flex flex-col bg-white/25 backdrop-blur-2xl"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -63,7 +62,7 @@ export function NavMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
           >
             <nav
               aria-label="القائمة السريعة"
-              className="limixi-glass rounded-2xl flex flex-col items-center gap-1.5 py-3 w-14 shrink-0"
+              className="rounded-2xl flex flex-col items-center gap-1.5 py-3 w-14 shrink-0 border border-white/40"
             >
               {railItems.map((item) => {
                 const active = item.id === activeId;
@@ -83,7 +82,7 @@ export function NavMenu({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
               })}
             </nav>
 
-            <div className="limixi-glass rounded-2xl flex-1 min-w-0 overflow-y-auto p-4">
+            <div className="rounded-2xl flex-1 min-w-0 overflow-y-auto p-4 border border-white/40">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeId}

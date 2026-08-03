@@ -1,15 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Home, LayoutGrid, ShoppingCart } from "lucide-react";
+import { Home, LayoutGrid, ShoppingCart, Search } from "lucide-react";
 import { WhatsAppIcon } from "./WhatsAppIcon";
 import { useCart } from "@/context/CartContext";
 import { useSettings } from "@/hooks/useSettings";
 
 /**
- * Fixed bottom navigation (mobile only, official site). A floating black bar
- * with one chamfered ("broken") corner echoing the LIMIXI card silhouette.
- * Icon-only so it reads the same in every language.
+ * Fixed bottom navigation (mobile only, official site). A floating fully
+ * rounded (pill) glass-black bar. Icon-only so it reads the same in every
+ * language. Search sits in the middle.
  */
 export function BottomNav() {
   const { count, open } = useCart();
@@ -27,11 +27,8 @@ export function BottomNav() {
     <nav
       dir="rtl"
       aria-label="التنقل السفلي"
-      className="md:hidden fixed inset-x-4 bottom-4 z-[90] bg-black text-white flex items-stretch justify-around shadow-[0_12px_30px_rgba(0,0,0,0.28)]"
-      style={{
-        clipPath: "polygon(22px 0, 100% 0, 100% 100%, 0 100%, 0 22px)",
-        paddingBottom: "env(safe-area-inset-bottom)",
-      }}
+      className="md:hidden fixed inset-x-4 bottom-4 z-[90] flex items-stretch justify-around rounded-full bg-black/85 backdrop-blur-md text-white shadow-[0_12px_30px_rgba(0,0,0,0.3)]"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
       <button onClick={scrollTop} aria-label="الرئيسية" className={itemClass}>
         <Home className="w-[22px] h-[22px]" />
@@ -39,6 +36,10 @@ export function BottomNav() {
 
       <button onClick={() => scrollTo("#crowd-favorites")} aria-label="المنتجات" className={itemClass}>
         <LayoutGrid className="w-[22px] h-[22px]" />
+      </button>
+
+      <button onClick={() => scrollTo("#crowd-favorites")} aria-label="بحث" className={itemClass}>
+        <Search className="w-[22px] h-[22px]" />
       </button>
 
       <button onClick={open} aria-label="السلة" className={itemClass}>

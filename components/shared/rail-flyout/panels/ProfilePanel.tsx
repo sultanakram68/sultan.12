@@ -3,7 +3,7 @@
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Settings, LogOut, User } from "lucide-react";
 
-const CARD = "rounded-xl border border-white/50 bg-white/35 p-3 mb-2";
+const CARD = "rounded-xl border border-white/30 bg-transparent p-3 mb-2";
 const CARD_INTERACTIVE = CARD + " w-full text-right flex items-center gap-2 text-sm text-[#5C5C58] hover:bg-white/45 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-black/20";
 
 /** Flyout panel: profile / account. */
