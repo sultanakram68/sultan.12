@@ -44,7 +44,7 @@ export function CrowdFavoritesClient({ favorites }: CrowdFavoritesClientProps) {
   }, [favorites]);
 
   return (
-    <section id="crowd-favorites" className="py-20 bg-limixi-bg relative scroll-mt-20">
+    <section id="crowd-favorites" className="py-20 bg-white relative scroll-mt-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Section Header */}
